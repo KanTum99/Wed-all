@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prompt Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  :root {
+    --bg: #0a0a0c;
+    --bg2: #111114;
+    --card: #16161a;
+    --border: #2a2a30;
+    --fg: #e8e8ec;
+    --muted: #6b6b78;
+    --accent: #00e68a;
+    --accent2: #00cc7a;
+    --accent-glow: rgba(0,230,138,0.15);
+    --danger: #ff4d6a;
+    --warn: #ffb84d;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'Space Grotesk', sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* === พื้นหลังเคลื่อนไหว === */
+  .bg-grid {
+    position: fixed; inset:0; z-index:0; pointer-events:none;
+    background-image:
+      linear-gradient(rgba(0,230,138,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,230,138,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    animation: gridMove 20s linear infinite;
+  }
+  @keyframes gridMove {
+    0% { transform: translate(0,0); }
+    100% { transform: translate(60px,60px); }
+  }
+
+  .bg-blob {
+    position: fixed; border-radius:50%; filter:blur(120px); pointer-events:none; z-index:0;
+  }
+  .bg-blob.a { width:500px; height:500px; background:rgba(0,230,138,0.06); top:-100px; right:-100px; animation: blobFloat 12s ease-in-out infinite alternate; }
+  .bg-blob.b { width:400px; height:400px; background:rgba(0,180,120,0.04); bottom:-80px; left:-80px; animation: blobFloat 15s ease-in-out infinite alternate-reverse; }
+  @keyframes blobFloat {
+    0% { transform: translate(0,0) scale(1); }
+    100% { transform: translate(40px,-30px) scale(1.15); }
+  }
+
+  /* === โครงเพจ === */
+  .app { position:relative; z-index:1; max-width:960px; margin:0 auto; padding:24px 20px 60px; }
+
+  /* === หัว === */
+  header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 0 28px; border-bottom:1px solid var(--border); margin-bottom:28px;
+  }
+  .logo { display:flex; align-items:center; gap:12px; }
+  .logo-icon {
+    width:42px; height:42px; border-radius:12px;
+    background: linear-gradient(135deg, var(--accent), #00b36b);
+    display:flex; align-items:center; justify-content:center;
+    font-size:20px; color:#0a0a0c; font-weight:700;
+    box-shadow: 0 0 24px var(--accent-glow);
+    animation: logoPulse 3s ease-in-out infinite;
+  }
+  @keyframes logoPulse {
+    0%,100% { box-shadow: 0 0 24px var(--accent-glow); }
+    50% { box-shadow: 0 0 40px rgba(0,230,138,0.25); }
+  }
+  .logo-text { font-size:22px; font-weight:700; letter-spacing:-0.5px; }
+  .logo-text span { color:var(--accent); }
+
+  .header-actions { display:flex; gap:8px; }
+  .header-actions button {
+    background:var(--card); border:1px solid var(--border); color:var(--muted);
+    border-radius:10px; padding:8px 14px; font-size:13px; cursor:pointer;
+    font-family:inherit; transition:all .2s;
+  }
+  .header-actions button:hover { color:var(--fg); border-color:var(--accent); background:var(--accent-glow); }
+
+  /* === แท็บ === */
+  .tabs {
+    display:flex; gap:4px; margin-bottom:20px;
+    background:var(--card); border-radius:12px; padding:4px; border:1px solid var(--border);
+  }
+  .tab {
+    flex:1; text-align:center; padding:10px 16px; border-radius:9px;
+    font-size:14px; font-weight:500; color:var(--muted); cursor:pointer;
+    transition:all .25s; border:none; background:none; font-family:inherit;
+  }
+  .tab:hover { color:var(--fg); }
+  .tab.active { background:var(--accent); color:#0a0a0c; font-weight:600; box-shadow:0 0 20px var(--accent-glow); }
+
+  /* === แผงเนื้อหา === */
+  .panel { display:none; animation: fadeUp .3s ease; }
+  .panel.active { display:block; }
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(12px); }
+    to { opacity:1; transform:translateY(0); }
+  }
+
+  /* === ช่องเขียน Prompt === */
+  .editor-wrap {
+    position:relative; border-radius:16px; overflow:hidden;
+    border:1px solid var(--border); background:var(--card);
+    transition: border-color .3s, box-shadow .3s;
+  }
+  .editor-wrap:focus-within {
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px var(--accent-glow), 0 8px 32px rgba(0,0,0,.4);
+  }
+  .editor-bar {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 18px; border-bottom:1px solid var(--border); background:var(--bg2);
+  }
+  .editor-bar-left { display:flex; align-items:center; gap:8px; }
+  .dot { width:10px; height:10px; border-radius:50%; }
+  .dot.r { background:#ff5f57; } .dot.y { background:#febc2e; } .dot.g { background:#28c840; }
+  .editor-bar-label { font-size:12px; color:var(--muted); font-family:'JetBrains Mono',monospace; margin-left:8px; }
+
+  .editor-area {
+    width:100%; min-height:280px; padding:20px; background:transparent;
+    border:none; outline:none; color:var(--fg); font-size:16px; line-height:1.75;
+    font-family:'JetBrains Mono',monospace; resize:vertical;
+  }
+  .editor-area::placeholder { color:var(--muted); }
+
+  .editor-footer {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 18px; border-top:1px solid var(--border); background:var(--bg2);
+  }
+  .stats { display:flex; gap:16px; }
+  .stat { font-size:12px; color:var(--muted); font-family:'JetBrains Mono',monospace; }
+  .stat b { color:var(--fg); font-weight:500; }
+
+  .editor-actions { display:flex; gap:6px; }
+  .btn-sm {
+    padding:7px 14px; border-radius:8px; border:1px solid var(--border);
+    background:var(--card); color:var(--muted); font-size:12px; cursor:pointer;
+    font-family:inherit; transition:all .2s; display:flex; align-items:center; gap:5px;
+  }
+  .btn-sm:hover { color:var(--fg); border-color:var(--accent); }
+  .btn-sm.primary { background:var(--accent); color:#0a0a0c; border-color:var(--accent); font-weight:600; }
+  .btn-sm.primary:hover { background:var(--accent2); box-shadow:0 0 16px var(--accent-glow); }
+  .btn-sm.danger:hover { border-color:var(--danger); color:var(--danger); }
+
+  /* === เทมเพลต === */
+  .template-grid {
+    display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:12px;
+  }
+  .template-card {
+    background:var(--card); border:1px solid var(--border); border-radius:14px;
+    padding:18px; cursor:pointer; transition:all .25s; position:relative; overflow:hidden;
+  }
+  .template-card::before {
+    content:''; position:absolute; inset:0; opacity:0;
+    background:linear-gradient(135deg, var(--accent-glow), transparent);
+    transition:opacity .25s;
+  }
+  .template-card:hover { border-color:var(--accent); transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,.3); }
+  .template-card:hover::before { opacity:1; }
+  .template-card * { position:relative; }
+  .template-tag {
+    display:inline-block; font-size:10px; font-weight:600; text-transform:uppercase;
+    letter-spacing:1px; padding:3px 8px; border-radius:6px; margin-bottom:10px;
+  }
+  .tag-writing { background:rgba(0,230,138,0.15); color:var(--accent); }
+  .tag-code { background:rgba(0,180,255,0.15); color:#00b4ff; }
+  .tag-image { background:rgba(255,184,77,0.15); color:var(--warn); }
+  .tag-chat { background:rgba(200,100,255,0.15); color:#c864ff; }
+  .tag-market { background:rgba(255,77,106,0.15); color:var(--danger); }
+  .template-title { font-size:15px; font-weight:600; margin-bottom:6px; }
+  .template-desc { font-size:12px; color:var(--muted); line-height:1.5; }
+
+  /* === ประวัติ === */
+  .history-list { display:flex; flex-direction:column; gap:8px; }
+  .history-item {
+    background:var(--card); border:1px solid var(--border); border-radius:12px;
+    padding:14px 18px; cursor:pointer; transition:all .2s;
+    display:flex; align-items:flex-start; gap:14px;
+  }
+  .history-item:hover { border-color:var(--accent); background:var(--accent-glow); }
+  .history-text {
+    flex:1; font-size:13px; line-height:1.6; color:var(--fg);
+    font-family:'JetBrains Mono',monospace;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+  }
+  .history-meta { font-size:11px; color:var(--muted); white-space:nowrap; margin-top:3px; }
+  .history-del {
+    background:none; border:none; color:var(--muted); cursor:pointer; font-size:14px;
+    padding:4px; transition:color .2s; flex-shrink:0;
+  }
+  .history-del:hover { color:var(--danger); }
+
+  .empty-state {
+    text-align:center; padding:60px 20px; color:var(--muted);
+  }
+  .empty-state i { font-size:40px; margin-bottom:16px; display:block; opacity:.3; }
+  .empty-state p { font-size:14px; }
+
+  /* === Toast === */
+  .toast-container { position:fixed; bottom:24px; right:24px; z-index:9999; display:flex; flex-direction:column; gap:8px; }
+  .toast {
+    background:var(--card); border:1px solid var(--border); border-radius:12px;
+    padding:12px 18px; font-size:13px; color:var(--fg); display:flex; align-items:center; gap:10px;
+    box-shadow:0 8px 32px rgba(0,0,0,.5); animation:toastIn .3s ease;
+    min-width:220px;
+  }
+  .toast.success { border-color:var(--accent); }
+  .toast.success i { color:var(--accent); }
+  .toast.error { border-color:var(--danger); }
+  .toast.error i { color:var(--danger); }
+  @keyframes toastIn {
+    from { opacity:0; transform:translateX(40px); }
+    to { opacity:1; transform:translateX(0); }
+  }
+  @keyframes toastOut {
+    from { opacity:1; transform:translateX(0); }
+    to { opacity:0; transform:translateX(40px); }
+  }
+
+  /* === มอดอล === */
+  .modal-overlay {
+    position:fixed; inset:0; background:rgba(0,0,0,.6); backdrop-filter:blur(6px);
+    z-index:999; display:none; align-items:center; justify-content:center; padding:20px;
+  }
+  .modal-overlay.show { display:flex; }
+  .modal {
+    background:var(--card); border:1px solid var(--border); border-radius:18px;
+    padding:28px; max-width:500px; width:100%; animation:fadeUp .25s ease;
+  }
+  .modal h3 { font-size:18px; font-weight:600; margin-bottom:12px; }
+  .modal p { font-size:13px; color:var(--muted); line-height:1.6; margin-bottom:20px; }
+  .modal-actions { display:flex; gap:8px; justify-content:flex-end; }
+  .modal-actions button {
+    padding:9px 18px; border-radius:10px; font-size:13px; cursor:pointer;
+    font-family:inherit; transition:all .2s; border:1px solid var(--border);
+  }
+  .modal-actions .cancel { background:var(--card); color:var(--muted); }
+  .modal-actions .cancel:hover { color:var(--fg); }
+  .modal-actions .confirm { background:var(--danger); color:#fff; border-color:var(--danger); font-weight:600; }
+  .modal-actions .confirm:hover { opacity:.85; }
+
+  /* === ส่วนที่เหลือ === */
+  .section-title {
+    font-size:13px; font-weight:600; color:var(--muted); text-transform:uppercase;
+    letter-spacing:1.5px; margin-bottom:14px;
+  }
+
+  .search-bar {
+    width:100%; padding:11px 16px 11px 40px; border-radius:10px;
+    border:1px solid var(--border); background:var(--card); color:var(--fg);
+    font-size:13px; font-family:inherit; outline:none; transition:border-color .2s;
+    margin-bottom:16px;
+  }
+  .search-bar:focus { border-color:var(--accent); }
+  .search-wrap { position:relative; }
+  .search-wrap i { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--muted); font-size:13px; }
+
+  .filter-chips { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px; }
+  .chip {
+    padding:6px 12px; border-radius:8px; font-size:11px; font-weight:500;
+    border:1px solid var(--border); background:var(--card); color:var(--muted);
+    cursor:pointer; transition:all .2s; font-family:inherit;
+  }
+  .chip:hover { color:var(--fg); }
+  .chip.active { background:var(--accent); color:#0a0a0c; border-color:var(--accent); font-weight:600; }
+
+  /* === Responsive === */
+  @media(max-width:640px) {
+    .app { padding:16px 14px 40px; }
+    header { flex-direction:column; gap:12px; align-items:flex-start; }
+    .template-grid { grid-template-columns:1fr; }
+    .editor-area { min-height:200px; font-size:14px; }
+    .editor-footer { flex-direction:column; gap:8px; align-items:flex-start; }
+  }
+
+  @media(prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration:0.01ms !important; transition-duration:0.01ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="bg-blob a"></div>
+<div class="bg-blob b"></div>
+
+<div class="app">
+  <header>
+    <div class="logo">
+      <div class="logo-icon"><i class="fa-solid fa-terminal"></i></div>
+      <div class="logo-text">Prompt<span>Studio</span></div>
+    </div>
+    <div class="header-actions">
+      <button onclick="exportAll()" title="Export ทั้งหมด"><i class="fa-solid fa-download"></i> Export</button>
+      <button onclick="importPrompts()" title="Import"><i class="fa-solid fa-upload"></i> Import</button>
+    </div>
+  </header>
+
+  <!-- แท็บ -->
+  <div class="tabs">
+    <button class="tab active" data-tab="editor"><i class="fa-solid fa-pen-nib"></i>&ensp;เขียน</button>
+    <button class="tab" data-tab="templates"><i class="fa-solid fa-shapes"></i>&ensp;เทมเพลต</button>
+    <button class="tab" data-tab="history"><i class="fa-solid fa-clock-rotate-left"></i>&ensp;ประวัติ</button>
+  </div>
+
+  <!-- แผงเขียน -->
+  <div class="panel active" id="panel-editor">
+    <div class="editor-wrap">
+      <div class="editor-bar">
+        <div class="editor-bar-left">
+          <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+          <span class="editor-bar-label">prompt.txt</span>
+        </div>
+      </div>
+      <textarea class="editor-area" id="promptInput" placeholder="เขียน prompt ที่นี่... แล้วกดบันทึกหรือคัดลอกได้เลย" spellcheck="false"></textarea>
+      <div class="editor-footer">
+        <div class="stats">
+          <span class="stat">ตัวอักษร <b id="charCount">0</b></span>
+          <span class="stat">คำ <b id="wordCount">0</b></span>
+          <span class="stat">บรรทัด <b id="lineCount">0</b></span>
+        </div>
+        <div class="editor-actions">
+          <button class="btn-sm danger" onclick="clearEditor()"><i class="fa-solid fa-trash-can"></i> ล้าง</button>
+          <button class="btn-sm" onclick="savePrompt()"><i class="fa-solid fa-floppy-disk"></i> บันทึก</button>
+          <button class="btn-sm primary" onclick="copyPrompt()"><i class="fa-solid fa-copy"></i> คัดลอก</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- แผงเทมเพลต -->
+  <div class="panel" id="panel-templates">
+    <div class="search-wrap">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input class="search-bar" id="templateSearch" placeholder="ค้นหาเทมเพลต..." oninput="filterTemplates()">
+    </div>
+    <div class="filter-chips">
+      <button class="chip active" data-filter="all" onclick="setFilter(this,'all')">ทั้งหมด</button>
+      <button class="chip" data-filter="writing" onclick="setFilter(this,'writing')">เขียน</button>
+      <button class="chip" data-filter="code" onclick="setFilter(this,'code')">โค้ด</button>
+      <button class="chip" data-filter="image" onclick="setFilter(this,'image')">รูปภาพ</button>
+      <button class="chip" data-filter="chat" onclick="setFilter(this,'chat')">แชท</button>
+      <button class="chip" data-filter="market" onclick="setFilter(this,'market')">การตลาด</button>
+    </div>
+    <div class="template-grid" id="templateGrid"></div>
+  </div>
+
+  <!-- แผงประวัติ -->
+  <div class="panel" id="panel-history">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <div class="section-title" style="margin:0;">บันทึกล่าสุด</div>
+      <button class="btn-sm danger" onclick="confirmClearAll()" id="clearAllBtn" style="display:none;"><i class="fa-solid fa-trash"></i> ล้างทั้งหมด</button>
+    </div>
+    <div class="history-list" id="historyList"></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- มอดอลยืนยัน -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h3>ล้างประวัติทั้งหมด?</h3>
+    <p>การกระทำนี้ไม่สามารถย้อนกลับได้ prompt ที่บันทึกไว้ทั้งหมดจะถูกลบถาวร</p>
+    <div class="modal-actions">
+      <button class="cancel" onclick="closeModal()">ยกเลิก</button>
+      <button class="confirm" onclick="clearAllHistory()">ล้างทั้งหมด</button>
+    </div>
+  </div>
+</div>
+
+<!-- ซ่อน input สำหรับ import -->
+<input type="file" id="fileInput" accept=".json,.txt" style="display:none" onchange="handleImport(event)">
+
+<script>
+  // === เทมเพลต prompt ฟรี ===
+  const templates = [
+    { cat:'writing', tag:'writing', title:'นักเขียนบล็อกมืออาชีพ', desc:'เขียนบทความบล็อกให้น่าสนใจ มีโครงสร้างชัดเจน จบด้วย CTA', prompt:'คุณเป็นนักเขียนบล็อกมืออาชีพที่มีประสบการณ์ 10 ปี จงเขียนบทความเรื่อง "[หัวข้อ]" ให้มีโครงสร้างดังนี้:\n1. หัวข้อเปิดที่ดึงดูด attention\n2. บทนำ 2-3 ย่อหน้าสร้างความน่าสนใจ\n3. เนื้อหาหลัก แบ่งเป็น 3-5 หัวข้อย่อย พร้อมตัวอย่างประกอบ\n4. สรุปปิดท้ายพร้อม Call-to-Action\n\nสไตล์: เป็นกันเอง, ใช้ภาษาเข้าใจง่าย, มีเรื่องเล่าแทรก\nความยาว: 800-1200 คำ\nกลุ่มเป้าหมาย: [กลุ่มเป้าหมาย]' },
+    { cat:'writing', tag:'writing', title:'นักเล่าเรื่องแนวซ่อนเงื่อน', desc:'เขียนเรื่องสั้นมีพล็อตหักมุม ตอนจบพลิกคาดเดา', prompt:'จงเขียนเรื่องสั้นแนวซ่อนเงื่อน โดยมีเงื่อนไขดังนี้:\n- ธีมหลัก: "[ธีม]" (เช่น ความลับ, การแก้แค้น, ความจริงที่ซ่อนอยู่)\n- ตัวละครหลัก: [คำอธิบายตัวละคร]\n- ฉาก: [สถานที่/ยุคสมัย]\n- พล็อตหักมุม: ตอนจบต้องทำให้ผู้อ่านตกใจและกลับไปอ่านใหม่เพื่อหาเบาะแส\n- ความยาว: 500-800 คำ\n- ใช้มุมมองบุคคลที่ 1\n- แทรกเบาะแสซ่อน 3 จุดที่บอกว่าจบจะเป็นอย่างไร' },
+    { cat:'code', tag:'code', title:'Architect วางระบบ', desc:'ออกแบบสถาปัตยกรรมซอฟต์แวร์ พร้อมเหตุผลแต่ละตัวเลือก', prompt:'คุณเป็น Software Architect ที่มีประสบการณ์ 15 ปี จงออกแบบสถาปัตยกรรมสำหรับระบบ "[ชื่อ/คำอธิบายระบบ]" โดยมีรายละเอียดดังนี้:\n\n1. ข้อกำหนด: [รายการฟีเจอร์หลัก]\n2. ผู้ใช้คาดหวัง: [จำนวน/ลักษณะผู้ใช้]\n3. งบประมาณ/ทีม: [ข้อจำกัด]\n\nให้ตอบตามโครงสร้าง:\n- ภาพรวมสถาปัตยกรรม (อธิบายแบบผัง)\n- เทคโนโลยีที่เลือก + เหตุผล\n- แผนภาพข้อมูลไหล (Data Flow)\n- จุดที่ต้องระวัง / Single Point of Failure\n- แผน Scale ในอนาคต\n- คำแนะนำเรื่อง DevOps/CI-CD' },
+    { cat:'code', tag:'code', title:'Code Review คุณภาพสูง', desc:'รีวิวโค้ดเชิงลึก หาบั๊ก แนะนำปรับปรุง', prompt:'คุณเป็น Senior Developer ที่เข้มงวดแต่สร้างสรรค์ จงรีวิวโค้ดต่อไปนี้:\n\n```\n[วางโค้ดที่นี่]\n```\n\nให้ตอบตามหมวด:\n1. **Bugs/Issues** - หาจุดที่อาจทำให้โปรแกรมทำงานผิดพลาด\n2. **Security** - ช่องโหว่ด้านความปลอดภัย\n3. **Performance** - จุดที่ควรเพิ่มประสิทธิภาพ\n4. **Readability** - การตั้งชื่อ, โครงสร้าง, ความเข้าใจง่าย\n5. **Best Practices** - การทำตามมาตรฐาน\n6. **Suggestion** - โค้ดที่ปรับปรุงแล้ว (ถ้ามี)\n\nระดับความเข้ม: [เบา/ปานกลาง/เข้ม]\nภาษาโค้ด: [ระบุภาษา]' },
+    { cat:'image', tag:'image', title:'Midjourney Master', desc:'สร้าง prompt วาดรูปสไตล์ Midjourney ละเอียดทุกมิติ', prompt:'จงสร้าง Midjourney prompt สำหรับภาพ: "[คำอธิบายภาพที่ต้องการ]"\n\nให้ระบุ:\n- Subject หลัก (อธิบายละเอียด)\n- สไตล์ศิลปะ (เช่น photorealistic, oil painting, cyberpunk, anime, watercolor)\n- แสง/บรรยากาศ (lighting: golden hour, neon, dramatic, soft)\n- มุมกล้อง (close-up, wide angle, bird eye, low angle)\n- โทนสี (warm, cool, muted, vibrant, monochrome)\n- รายละเอียดพิเศษ (texture, particles, reflections)\n- Aspect ratio (--ar 16:9 หรืออื่นๆ)\n- Quality tags (--q 2 --v 6.0)\n\nเขียนเป็น prompt ภาษาอังกฤษ 1 บรรทัด พร้อมคำอธิบายแยกเป็นภาษาไทย' },
+    { cat:'image', tag:'image', title:'Character Designer', desc:'ออกแบบตัวละคร ละเอียดทั้งหน้าตา ชุด อาวุธ บุคลิก', prompt:'จงออกแบบตัวละครสำหรับ [เกม/นิยาย/อนิเมะ] โดยมีคอนเซ็ปต์: "[คอนเซ็ปต์ตัวละคร]"\n\nให้ระบุ:\n1. ชื่อและฉายา\n2. อายุ, เพศ, เชื้อชาติ/สปีชีส์\n3. รูปร่างหน้าตา (ผม, ตา, ผิว, ความสูง, รูปร่าง)\n4. ชุด/เสื้อผ้า (ละเอียดทุกชิ้น สี วัสดุ)\n5. อาวุธ/อุปกรณ์ พร้อมความพิเศษ\n6. บุคลิก/นิสัย 3 ข้อ\n7. จุดเด่น/แผนเป็น 1 จุด\n8. Backstory สั้น 3 บรรทัด\n9. Prompt สำหรับ AI วาดภาพ (ภาษาอังกฤษ)' },
+    { cat:'chat', tag:'chat', title:'Roleplay Character Card', desc:'สร้างการ์ดตัวละครสำหรับแชท มีบุคลิกครบ', prompt:'จงสร้าง Roleplay Character Card สำหรับ AI แชท โดยมีรายละเอียดดังนี้:\n\nชื่อตัวละคร: "[ชื่อ]"\nบทบาท: "[บทบาท เช่น พ่อสอนภาษา, เพื่อนที่ปรึกษา, ผู้เชี่ยวชาญด้าน...]"\n\nให้เขียน:\n1. **Personality** - นิสัย 5 ข้อ (บวก+ลบ ผสมกัน)\n2. **Speaking Style** - วิธีพูด (สุภาพ/กึ่งกึ่ง/ไม่เป็นทางการ, ใช้คำว่าอะไรเรียกตัวเอง, ใช้คำว่าอะไรเรียกผู้ใช้)\n3. **Background** - ประวัติสั้น 3 บรรทัด\n4. **Knowledge** - สิ่งที่รู้ดี / สิ่งที่ไม่รู้\n5. **Rules** - 3 ข้อที่ตัวละครต้องไม่ทำ (ขอบเขต)\n6. **Greeting** - ข้อความเปิดแชทแรก 2-3 บรรทัด\n7. **Example Dialog** - 3 คู่ (ผู้ใช้: ... / ตัวละคร: ...)' },
+    { cat:'chat', tag:'chat', title:'Socratic Tutor', desc:'ติวเตอร์สอนแบบถาม-ตอบ กระตุ้นคิดเอง', prompt:'คุณเป็นติวเตอร์ที่ใช้วิธี Socratic Method ในการสอน\n\nวิชา/หัวข้อ: "[วิชา/หัวข้อ]"\nระดับ: [มัธยม/ปริญญาตรี/บัณฑิต]\n\nกฎ:\n1. ห้ามตอบตรงๆ ต้องถามคำถามนำให้ผู้เรียนคิดเอง\n2. ถ้าผู้เรียนตอบผิด อย่าบอกว่าผิด แต่ถามคำถามที่ทำให้เห็นจุดขัดแย้งเอง\n3. ใช้ตัวอย่าง/การเปรียบเทียบในชีวแนะนำ\n4. ทำเป็นบทสนทนาทีละคำถาม รอคำตอบทุกครั้ง\n5. เมื่อผู้เรียนเข้าใจแล้ว สรุปประเด็นสำคัญ 1 บรรทัด\n6. ใช้ภาษาเป็นกันเอง ไม่เกรี้ยวกราด\n\nเริ่มต้น: ทักทายและถามว่าผู้เรียนรู้เรื่องนี้มาแค่ไหนแล้ว' },
+    { cat:'market', tag:'market', title:'Facebook Ads Copywriter', desc:'เขียนโฆษณา Facebook แปลงสูง มีหลายเวอร์ชัน', prompt:'คุณเป็น Copywriter ที่เชี่ยวชาญ Facebook Ads มีอัตราคลิกเฉลี่ย 4%+ จงเขียนโฆษณาสำหรับ:\n\nสินค้า/บริการ: "[ชื่อสินค้า/บริการ]"\nจุดขายหลัก: [3 จุดขาย]\nกลุ่มเป้าหมาย: [อายุ/ความสนใจ/พฤติกรรม]\nโทน: [เป็นกันเอง/มืออาชีพ/ตลก/กระตุ้นความรู้สึก]\n\nให้เขียน 3 เวอร์ชัน:\n**เวอร์ชัน A — สั้นกระแทก** (ไม่เกิน 3 บรรทัด + CTA)\n**เวอร์ชัน B — เล่าเรื่อง** (เริ่มจากปัญหา → ทางออก → CTA)\n**เวอร์ชัน C — ลิสต์ข้อดี** (5 ข้อ + CTA)\n\nพร้อมแนะนำ:\n- รูปภาพ/วิดีโอที่ควรใช้\n- ช่วงเวลาโพสต์ที่เหมาะสม\n- งบประมาณแนะนำ/วัน' },
+    { cat:'market', tag:'market', title:'Email Sequence Builder', desc:'สร้างลำดับอีเมล 5 ฉบับ ตั้งแต่ต้อนรับถึงปิดการขาย', prompt:'จงสร้าง Email Sequence 5 ฉบับ สำหรับ:\n\nสินค้า/บริการ: "[ชื่อ]"\nราคา: [ราคา]\nกลุ่มเป้าหมาย: [อธิบาย]\nจุดประสงค์: [ขาย/สมัคร/ลงทะเบียน/อื่นๆ]\n\nอีเมลทั้ง 5 ฉบับ:\n1. **Welcome** — ต้อนรับ + แนะนำตัว + สิ่งที่จะได้รับต่อไป\n2. **Value** — ให้ความรู้/เคล็ดลับฟรี 1 ข้อ สร้างความน่าเชื่อถือ\n3. **Story** — เล่าเรื่อง/เคสสำเร็จ สร้างอารมณ์\n4. **Offer** — เสนอสินค้า/บริการ พร้อมข้อดี + urgency\n5. **Last Call** — เตือนว่าโปรจะหมด + สรุปข้อดีอีกครั้ง + CTA ชัดเจน\n\nแต่ละฉบับระบุ: Subject line, Preview text, เนื้อหา, CTA' },
+    { cat:'writing', tag:'writing', title:'SEO Article Outline', desc:'สร้างโครงบทความ SEO พร้อมคีย์เวิร์ดแต่ละหัวข้อ', prompt:'คุณเป็น SEO Specialist + Content Writer จงสร้างโครงบทความ SEO สำหรับ:\n\nคีย์เวิร์ดหลัก: "[คีย์เวิร์ด]"\nคีย์เวิร์ดรอง: [คีย์เวิร์ดรอง ถ้ามี]\n\nให้ระบุ:\n1. **Title Tag** (ไม่เกิน 60 ตัวอักษร)\n2. **Meta Description** (ไม่เกิน 160 ตัวอักษร)\n3. **H1** — หัวข้อหลัก\n4. **H2** 5-8 หัวข้อย่อย แต่ละหัวข้อระบุ:\n   - คีย์เวิร์ดที่ใช้\n   - สรุปเนื้อหา 1 บรรทัด\n   - คำแนะนำจำนวนคำ\n5. **FAQ** — 3 คำถามที่คนถามบ่อย (พร้อมคำตอบสั้น)\n6. **Internal Link แนะนำ** — หัวข้อไหนควรลิงก์ไปหน้าไหน\n7. **CTA** — ข้อความกระตุ้นการกระทำ' },
+    { cat:'code', tag:'code', title:'API Designer', desc:'ออกแบบ REST API ครบ พร้อม endpoint, method, body, response', prompt:'คุณเป็น API Designer จงออกแบบ REST API สำหรับระบบ: "[ชื่อ/คำอธิบายระบบ]"\n\nขอบเขต: [ฟีเจอร์หลัก]\n\nให้ระบุทุก Endpoint:\n- Method (GET/POST/PUT/DELETE)\n- Path\n- Description\n- Request Body (JSON)\n- Response Body (JSON ทั้ง success และ error)\n- Auth ที่ต้องการ (None/Bearer/API Key)\n\nพร้อม:\n- Error Code มาตรฐาน (400, 401, 403, 404, 500)\n- Rate Limit แนะนำ\n- Pagination แบบที่ใช้ (offset/curser)\n- ลำดับการเรียกที่แนะนำ (flow)' },
+  ];
+
+  // === สถานะ ===
+  let currentFilter = 'all';
+  let history = JSON.parse(localStorage.getItem('promptStudioHistory') || '[]');
+
+  // === อ้างอิง DOM ===
+  const promptInput = document.getElementById('promptInput');
+  const charCount = document.getElementById('charCount');
+  const wordCount = document.getElementById('wordCount');
+  const lineCount = document.getElementById('lineCount');
+  const templateGrid = document.getElementById('templateGrid');
+  const historyList = document.getElementById('historyList');
+  const clearAllBtn = document.getElementById('clearAllBtn');
+  const toastContainer = document.getElementById('toastContainer');
+  const modalOverlay = document.getElementById('modalOverlay');
+  const fileInput = document.getElementById('fileInput');
+
+  // === แท็บ ===
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+    });
+  });
+
+  // === นับสถิติ ===
+  promptInput.addEventListener('input', updateStats);
+  function updateStats() {
+    const val = promptInput.value;
+    charCount.textContent = val.length;
+    wordCount.textContent = val.trim() === '' ? 0 : val.trim().split(/\s+/).length;
+    lineCount.textContent = val === '' ? 0 : val.split('\n').length;
+  }
+
+  // === คัดลอก ===
+  function copyPrompt() {
+    const text = promptInput.value.trim();
+    if (!text) { showToast('เขียน prompt ก่อนนะ', 'error'); return; }
+    navigator.clipboard.writeText(text).then(() => {
+      showToast('คัดลอกเรียบร้อยแล้ว', 'success');
+    }).catch(() => {
+      // fallback
+      const ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta);
+      ta.select(); document.execCommand('copy');
+      document.body.removeChild(ta);
+      showToast('คัดลอกเรียบร้อยแล้ว', 'success');
+    });
+  }
+
+  // === บันทึก ===
+  function savePrompt() {
+    const text = promptInput.value.trim();
+    if (!text) { showToast('เขียน prompt ก่อนนะ', 'error'); return; }
+    const entry = { id: Date.now(), text, time: new Date().toLocaleString('th-TH') };
+    history.unshift(entry);
+    if (history.length > 50) history.pop(); // จำกัด 50 รายการ
+    localStorage.setItem('promptStudioHistory', JSON.stringify(history));
+    showToast('บันทึกแล้ว', 'success');
+    renderHistory();
+  }
+
+  // === ล้างช่องเขียน ===
+  function clearEditor() {
+    if (promptInput.value.trim() === '') return;
+    promptInput.value = '';
+    updateStats();
+    showToast('ล้างช่องเขียนแล้ว', 'success');
+  }
+
+  // === แสดงเทมเพลต ===
+  function renderTemplates() {
+    const search = document.getElementById('templateSearch').value.toLowerCase();
+    const filtered = templates.filter(t => {
+      const matchCat = currentFilter === 'all' || t.cat === currentFilter;
+      const matchSearch = t.title.toLowerCase().includes(search) || t.desc.toLowerCase().includes(search);
+      return matchCat && matchSearch;
+    });
+    templateGrid.innerHTML = filtered.map((t, i) => `
+      <div class="template-card" onclick="useTemplate(${templates.indexOf(t)})">
+        <span class="template-tag tag-${t.tag}">${tagLabel(t.tag)}</span>
+        <div class="template-title">${t.title}</div>
+        <div class="template-desc">${t.desc}</div>
+      </div>
+    `).join('');
+    if (filtered.length === 0) {
+      templateGrid.innerHTML = '<div class="empty-state"><i class="fa-solid fa-ghost"></i><p>ไม่พบเทมเพลตที่ตรงกัน</p></div>';
+    }
+  }
+  function tagLabel(tag) {
+    const map = { writing:'เขียน', code:'โค้ด', image:'รูปภาพ', chat:'แชท', market:'การตลาด' };
+    return map[tag] || tag;
+  }
+  function useTemplate(idx) {
+    promptInput.value = templates[idx].prompt;
+    updateStats();
+    // สลับไปแท็บเขียน
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelector('[data-tab="editor"]').classList.add('active');
+    document.getElementById('panel-editor').classList.add('active');
+    showToast('โหลดเทมเพลต "' + templates[idx].title + '" แล้ว', 'success');
+    promptInput.focus();
+  }
+  function filterTemplates() { renderTemplates(); }
+  function setFilter(el, f) {
+    currentFilter = f;
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    renderTemplates();
+  }
+
+  // === แสดงประวัติ ===
+  function renderHistory() {
+    clearAllBtn.style.display = history.length > 0 ? 'flex' : 'none';
+    if (history.length === 0) {
+      historyList.innerHTML = '<div class="empty-state"><i class="fa-solid fa-inbox"></i><p>ยังไม่มี prompt ที่บันทึกไว้</p></div>';
+      return;
+    }
+    historyList.innerHTML = history.map(h => `
+      <div class="history-item">
+        <div style="flex:1;cursor:pointer;" onclick="loadHistory(${h.id})">
+          <div class="history-text">${escHtml(h.text)}</div>
+          <div class="history-meta">${h.time}</div>
+        </div>
+        <button class="history-del" onclick="deleteHistory(${h.id})" title="ลบ"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+    `).join('');
+  }
+  function loadHistory(id) {
+    const entry = history.find(h => h.id === id);
+    if (!entry) return;
+    promptInput.value = entry.text;
+    updateStats();
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelector('[data-tab="editor"]').classList.add('active');
+    document.getElementById('panel-editor').classList.add('active');
+    showToast('โหลด prompt แล้ว', 'success');
+    promptInput.focus();
+  }
+  function deleteHistory(id) {
+    history = history.filter(h => h.id !== id);
+    localStorage.setItem('promptStudioHistory', JSON.stringify(history));
+    renderHistory();
+    showToast('ลบแล้ว', 'success');
+  }
+  function confirmClearAll() { modalOverlay.classList.add('show'); }
+  function closeModal() { modalOverlay.classList.remove('show'); }
+  function clearAllHistory() {
+    history = [];
+    localStorage.setItem('promptStudioHistory', JSON.stringify(history));
+    renderHistory();
+    closeModal();
+    showToast('ล้างประวัติทั้งหมดแล้ว', 'success');
+  }
+  // ปิดมอดอลเมื่อคลิกนอก
+  modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) closeModal(); });
+
+  // === Export / Import ===
+  function exportAll() {
+    const data = { history, exportedAt: new Date().toISOString() };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'prompt-studio-export.json'; a.click();
+    URL.revokeObjectURL(url);
+    showToast('Export สำเร็จ', 'success');
+  }
+  function importPrompts() { fileInput.click(); }
+  function handleImport(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (data.history && Array.isArray(data.history)) {
+          data.history.forEach(h => {
+            if (h.id && h.text && h.time) history.unshift(h);
+          });
+          // ลบซ้ำตาม id
+          const seen = new Set();
+          history = history.filter(h => { if (seen.has(h.id)) return false; seen.add(h.id); return true; });
+          if (history.length > 50) history = history.slice(0, 50);
+          localStorage.setItem('promptStudioHistory', JSON.stringify(history));
+          renderHistory();
+          showToast('Import สำเร็จ — ' + data.history.length + ' รายการ', 'success');
+        } else if (typeof data === 'string') {
+          // ไฟล์ .txt ธรรมดา
+          promptInput.value = data;
+          updateStats();
+          showToast('โหลดข้อความเข้าช่องเขียนแล้ว', 'success');
+        }
+      } catch {
+        showToast('ไฟล์ไม่ถูกต้อง', 'error');
+      }
+    };
+    reader.readAsText(file);
+    fileInput.value = '';
+  }
+
+  // === Toast ===
+  function showToast(msg, type) {
+    const t = document.createElement('div');
+    t.className = 'toast ' + type;
+    t.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation'}"></i> ${msg}`;
+    toastContainer.appendChild(t);
+    setTimeout(() => {
+      t.style.animation = 'toastOut .3s ease forwards';
+      setTimeout(() => t.remove(), 300);
+    }, 2200);
+  }
+
+  // === HTML escape ===
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // === คีย์ลัด ===
+  document.addEventListener('keydown', e => {
+    // Ctrl/Cmd + S = บันทึก
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      e.preventDefault();
+      savePrompt();
+    }
+    // Ctrl/Cmd + Shift + C = คัดลอก
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'C') {
+      e.preventDefault();
+      copyPrompt();
+    }
+    // Escape = ปิดมอดอล
+    if (e.key === 'Escape') closeModal();
+  });
+
+  // === เริ่มต้น ===
+  renderTemplates();
+  renderHistory();
+  updateStats();
+</script>
+</body>
+  </html>
