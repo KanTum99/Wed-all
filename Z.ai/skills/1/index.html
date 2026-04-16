@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skill Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  :root {
+    --bg:#08080a; --bg2:#0e0e12; --card:#141418; --card2:#1a1a20;
+    --border:#26262e; --fg:#eaeaef; --muted:#5e5e6e;
+    --accent:#00e68a; --accent2:#00cc7a; --accent-glow:rgba(0,230,138,0.12);
+    --cyan:#00d4ff; --cyan-glow:rgba(0,212,255,0.12);
+    --orange:#ff8a3d; --orange-glow:rgba(255,138,61,0.12);
+    --pink:#ff4d8a; --pink-glow:rgba(255,77,138,0.12);
+    --purple:#a855f7; --purple-glow:rgba(168,85,247,0.12);
+    --radius:16px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--fg);min-height:100vh;overflow-x:hidden;}
+
+  /* === พื้นหลัง === */
+  .bg-noise{position:fixed;inset:0;z-index:0;opacity:.03;pointer-events:none;
+    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .bg-orb{position:fixed;border-radius:50%;filter:blur(100px);pointer-events:none;z-index:0;}
+  .bg-orb.a{width:500px;height:500px;background:rgba(0,230,138,0.05);top:-120px;right:-100px;animation:orb 14s ease-in-out infinite alternate;}
+  .bg-orb.b{width:400px;height:400px;background:rgba(0,212,255,0.04);bottom:-100px;left:-80px;animation:orb 18s ease-in-out infinite alternate-reverse;}
+  .bg-orb.c{width:300px;height:300px;background:rgba(168,85,247,0.03);top:40%;left:50%;animation:orb 12s ease-in-out infinite alternate;}
+  @keyframes orb{0%{transform:translate(0,0) scale(1);}100%{transform:translate(30px,-25px) scale(1.1);}}
+
+  .app{position:relative;z-index:1;max-width:880px;margin:0 auto;padding:28px 20px 60px;}
+
+  /* === Header === */
+  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:36px;}
+  .logo{display:flex;align-items:center;gap:12px;}
+  .logo-icon{width:44px;height:44px;border-radius:13px;
+    background:linear-gradient(135deg,var(--accent),var(--cyan));
+    display:flex;align-items:center;justify-content:center;
+    font-size:20px;color:#08080a;font-weight:800;
+    box-shadow:0 0 30px var(--accent-glow);
+  }
+  .logo-text{font-size:24px;font-weight:800;letter-spacing:-0.5px;}
+  .logo-text span{background:linear-gradient(135deg,var(--accent),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+  .header-badge{font-size:11px;padding:5px 10px;border-radius:8px;background:var(--accent-glow);color:var(--accent);font-weight:600;border:1px solid rgba(0,230,138,0.2);}
+
+  /* === ค้นหา === */
+  .search-wrap{position:relative;margin-bottom:24px;}
+  .search-wrap i{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px;}
+  .search-bar{width:100%;padding:14px 16px 14px 44px;border-radius:14px;border:1px solid var(--border);background:var(--card);color:var(--fg);font-size:14px;font-family:inherit;outline:none;transition:all .25s;}
+  .search-bar:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow);}
+  .search-bar::placeholder{color:var(--muted);}
+
+  /* === Skill Grid === */
+  .skill-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;}
+  .skill-card{
+    background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+    padding:22px;cursor:pointer;transition:all .25s;position:relative;overflow:hidden;
+  }
+  .skill-card::after{content:'';position:absolute;inset:0;opacity:0;transition:opacity .25s;pointer-events:none;}
+  .skill-card:hover{transform:translateY(-3px);border-color:var(--skill-c);box-shadow:0 8px 30px rgba(0,0,0,.4);}
+  .skill-card:hover::after{opacity:1;}
+  .skill-card:hover .skill-icon{transform:scale(1.1);}
+
+  .skill-icon{
+    width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+    font-size:18px;margin-bottom:14px;transition:transform .25s;
+  }
+  .skill-title{font-size:15px;font-weight:700;margin-bottom:5px;}
+  .skill-desc{font-size:12px;color:var(--muted);line-height:1.55;}
+  .skill-arrow{position:absolute;top:22px;right:20px;color:var(--muted);font-size:12px;transition:all .25s;opacity:0;transform:translateX(-6px);}
+  .skill-card:hover .skill-arrow{opacity:1;transform:translateX(0);color:var(--skill-c);}
+
+  /* === มอดอล Skill === */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(8px);z-index:100;display:none;align-items:center;justify-content:center;padding:20px;}
+  .modal-overlay.show{display:flex;}
+  .modal-box{background:var(--bg2);border:1px solid var(--border);border-radius:20px;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;animation:modalIn .3s ease;}
+  @keyframes modalIn{from{opacity:0;transform:translateY(20px) scale(.97);}to{opacity:1;transform:translateY(0) scale(1);}}
+
+  .modal-head{padding:24px 28px 0;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
+  .modal-head-left{display:flex;align-items:center;gap:14px;}
+  .modal-icon{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+  .modal-title{font-size:20px;font-weight:700;}
+  .modal-subtitle{font-size:12px;color:var(--muted);margin-top:2px;}
+  .modal-close{background:var(--card);border:1px solid var(--border);color:var(--muted);width:36px;height:36px;border-radius:10px;cursor:pointer;font-size:14px;transition:all .2s;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .modal-close:hover{color:var(--fg);border-color:var(--fg);}
+
+  .modal-body{padding:20px 28px 28px;}
+  .field{margin-bottom:16px;}
+  .field-label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px;display:flex;align-items:center;gap:6px;}
+  .field-label i{font-size:10px;}
+  .field-input,.field-select,.field-textarea{
+    width:100%;padding:12px 14px;border-radius:11px;border:1px solid var(--border);
+    background:var(--card);color:var(--fg);font-size:14px;font-family:inherit;outline:none;transition:all .2s;
+  }
+  .field-input:focus,.field-select:focus,.field-textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow);}
+  .field-input::placeholder,.field-textarea::placeholder{color:var(--muted);}
+  .field-textarea{min-height:80px;resize:vertical;line-height:1.6;}
+  .field-select{appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%235e5e6e' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;}
+  .field-select option{background:var(--card);color:var(--fg);}
+
+  .modal-actions{display:flex;gap:8px;margin-top:6px;}
+  .btn{padding:12px 22px;border-radius:11px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s;border:none;display:flex;align-items:center;gap:8px;}
+  .btn-ghost{background:var(--card);border:1px solid var(--border);color:var(--muted);}
+  .btn-ghost:hover{color:var(--fg);border-color:var(--fg);}
+  .btn-primary{background:linear-gradient(135deg,var(--accent),#00b87a);color:#08080a;flex:1;justify-content:center;}
+  .btn-primary:hover{box-shadow:0 0 24px var(--accent-glow);transform:translateY(-1px);}
+
+  /* === ผลลัพธ์ === */
+  .result-box{margin-top:18px;display:none;}
+  .result-box.show{display:block;animation:fadeUp .3s ease;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+  .result-label{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+  .result-text{
+    background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;
+    font-size:13px;line-height:1.75;font-family:'JetBrains Mono',monospace;color:var(--fg);
+    max-height:240px;overflow-y:auto;white-space:pre-wrap;word-break:break-word;
+  }
+  .result-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
+  .btn-sm{padding:8px 14px;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s;border:1px solid var(--border);background:var(--card);color:var(--muted);display:flex;align-items:center;gap:5px;}
+  .btn-sm:hover{color:var(--fg);border-color:var(--fg);}
+  .btn-sm.accent{background:var(--accent-glow);color:var(--accent);border-color:rgba(0,230,138,0.2);}
+  .btn-sm.accent:hover{background:rgba(0,230,138,0.2);}
+
+  .toggle-raw{font-size:11px;color:var(--muted);cursor:pointer;margin-top:8px;display:inline-flex;align-items:center;gap:4px;transition:color .2s;user-select:none;}
+  .toggle-raw:hover{color:var(--fg);}
+
+  /* === Toast === */
+  .toast-box{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;}
+  .toast{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:12px 18px;font-size:13px;color:var(--fg);display:flex;align-items:center;gap:10px;box-shadow:0 8px 32px rgba(0,0,0,.5);animation:toastIn .3s ease;}
+  .toast.ok{border-color:var(--accent);} .toast.ok i{color:var(--accent);}
+  @keyframes toastIn{from{opacity:0;transform:translateX(40px);}to{opacity:1;transform:translateX(0);}}
+  @keyframes toastOut{from{opacity:1;}to{opacity:0;transform:translateX(40px);}}
+
+  /* === Responsive === */
+  @media(max-width:640px){
+    .skill-grid{grid-template-columns:1fr 1fr;}
+    .modal-box{max-height:95vh;}
+    .modal-body{padding:16px 20px 24px;}
+    .modal-head{padding:20px 20px 0;}
+  }
+  @media(max-width:420px){.skill-grid{grid-template-columns:1fr;}}
+  @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;}}
+</style>
+</head>
+<body>
+
+<div class="bg-noise"></div>
+<div class="bg-orb a"></div>
+<div class="bg-orb b"></div>
+<div class="bg-orb c"></div>
+
+<div class="app">
+  <header>
+    <div class="logo">
+      <div class="logo-icon"><i class="fa-solid fa-bolt"></i></div>
+      <div class="logo-text">Skill<span>Studio</span></div>
+    </div>
+    <div class="header-badge">Zero-Prompt Engine</div>
+  </header>
+
+  <div class="search-wrap">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <input class="search-bar" id="searchBar" placeholder="ค้นหาทักษะ... เช่น เขียน, โค้ด, โฆษณา" oninput="renderSkills()">
+  </div>
+
+  <div class="skill-grid" id="skillGrid"></div>
+</div>
+
+<!-- มอดอล Skill -->
+<div class="modal-overlay" id="overlay">
+  <div class="modal-box" id="modalBox"></div>
+</div>
+
+<!-- Toast -->
+<div class="toast-box" id="toastBox"></div>
+
+<script>
+// === ข้อมูล Skills ===
+const skills = [
+  {
+    id:'blog', icon:'fa-pen-fancy', color:'var(--accent)', glow:'var(--accent-glow)',
+    title:'เขียนบล็อกดึงดูด', desc:'สร้างบทความน่าอ่าน มีโครงสร้าง จบด้วย CTA',
+    fields:[
+      {key:'topic',label:'หัวข้อ',type:'input',placeholder:'เช่น เทคนิคออมเงินสำหรับมนุษย์เงินเดือน'},
+      {key:'audience',label:'กลุ่มเป้าหมาย',type:'input',placeholder:'เช่น วัยทำงาน 25-35 ปี'},
+      {key:'tone',label:'โทนเสียง',type:'select',options:['เป็นกันเอง','มืออาชีพ','สนุกสนาน','กระตุ้นความรู้สึก']},
+      {key:'length',label:'ความยาว',type:'select',options:['500 คำ','800 คำ','1200 คำ','2000+ คำ']},
+    ],
+    build:(f)=>`คุณเป็นนักเขียนบล็อกมืออาชีพที่มีประสบการณ์ 10 ปี วิธีเขียนของคุณคือ "เขียนแบบเข้าใจง่าย แต่แหลมคมทุกประโยค"\n\nจงเขียนบทความเรื่อง "${f.topic}" สำหรับกลุ่มเป้าหมาย: ${f.audience}\n\nโทนเสียง: ${f.tone}\nความยาวเป้าหมาย: ${f.length}\n\nโครงสร้างที่ต้องการ:\n1. **หัวข้อเปิด** — 1 ประโยคที่ทำให้คนหยุดเลื่อน ใช้คำถามหรือข้อเท็จจริงที่น่าประหลาดใจ\n2. **บทนำ** — 2-3 ยร่อหน้า สร้างความรู้สึกว่า "นี่คือปัญหาของฉัน"\n3. **เนื้อหาหลัก** — แบ่งเป็น 3-5 หัวข้อย่อย แต่ละหัวข้อมี ตัวอย่าง/เคส/ตัวเลข ประกอบ\n4. **สรุป** — 1 ย่อหน้า พร้อม Call-to-Action ชัดเจน\n5. **หมายเหตุ** — แนะนำแหล่งอ่านเพิ่ม 2 แหล่ง\n\nกฎ: ห้ามใช้คำว่า "ในบทความนี้", "วันนี้เราจะมา", "ลองมาดูกัน" — ให้เข้าเรื่องทันที`
+  },
+  {
+    id:'brainstorm', icon:'fa-lightbulb', color:'var(--orange)', glow:'var(--orange-glow)',
+    title:'ระดมไอเดีย', desc:'ได้ 10 ไอเดียแหวกแนว ไม่ซ้ำใคร พร้อมวิธีเริ่ม',
+    fields:[
+      {key:'problem',label:'โจทย์/สิ่งที่อยากคิด',type:'textarea',placeholder:'เช่น อยากทำคอนเทนต์ TikTok เกี่ยวกับคาเฟ่ แต่ไม่อยากทำแบบที่เห็นทั่วไป'},
+      {key:'count',label:'จำนวนไอเดีย',type:'select',options:['5 ไอเดีย','10 ไอเดีย','20 ไอเดีย']},
+      {key:'style',label:'สไตล์',type:'select',options:['บ้าพล่านสุดๆ','แหวกแนวแต่ทำได้จริง','เรียบแต่แรง','ผสมทุกสไตล์']},
+    ],
+    build:(f)=>`คุณเป็นนักคิดสร้างสรรค์ระดับโลก ที่เชี่ยวชาญการคิดไอเดียนอกกรอบ ไม่เคยให้ไอเดียแบบที่คนอื่นคิดได้\n\nโจทย์: ${f.problem}\nจำนวน: ${f.count}\nสไตล์: ${f.style}\n\nให้ตอบในรูปแบบ:\n**ไอเดีย [ลำดับ]: [ชื่อไอเดีย สั้น 1 บรรทัด]**\n- คอนเซ็ปต์: [อธิบาย 1-2 ประโยค]\n- ทำไมถึงต่าง: [เหตุผลว่าทำไมไม่เหมือนที่เคยเห็น]\n- วิธีเริ่มต้น: [ขั้นตอนแรกที่ทำได้ทันที]\n- คะแนนความเสี่ยง: [ต่ำ/กลาง/สูง]\n\nกฎ: ห้ามให้ไอเดียที่เห็นได้ทั่วไป เช่น "ทำรีวิว", "ทำแคปชั่นสวยๆ" — ทุกไอเดียต้องทำให้คนต้องหันมามอง`
+  },
+  {
+    id:'codereview', icon:'fa-bug', color:'var(--cyan)', glow:'var(--cyan-glow)',
+    title:'รีวิวโค้ดเชิงลึก', desc:'หาบั๊ก, ช่องโหว่, เพิ่มประสิทธิภาพ พร้อมโค้ดแก้',
+    fields:[
+      {key:'code',label:'วางโค้ด',type:'textarea',placeholder:'วางโค้ดที่นี่...'},
+      {key:'lang',label:'ภาษา',type:'input',placeholder:'เช่น JavaScript, Python, Go'},
+      {key:'level',label:'ระดับความเข้ม',type:'select',options:['เบา (เน้นสิ่งสำคัญ)','ปานกลาง (ครอบคลุม)','เข้ม (ทุกบรรทัด)']},
+    ],
+    build:(f)=>`คุณเป็น Principal Engineer ที่มีมาตรฐานสูงมาก แต่ให้คำแนะนำอย่างสร้างสรรค์ ไม่ทำลายกำลังใจ\n\nจงรีวิวโค้ดต่อไปนี้ (ภาษา: ${f.lang})\nระดับความเข้ม: ${f.level}\n\n\`\`\`${f.lang}\n${f.code}\n\`\`\`\n\nให้ตอบตามหมวด (ถ้าหมวดไหนไม่มีปัญหา ให้เขียน "ไม่พบปัญหา"):\n\n1. **🐛 Bugs** — จุดที่อาจทำให้โปรแกรมพัง/ทำงานผิด\n2. **🔒 Security** — ช่องโหว่ด้านความปลอดภัย\n3. **⚡ Performance** — จุดที่ควรเพิ่มประสิทธิภาพ\n4. **📖 Readability** — การตั้งชื่อ, โครงสร้าง, ความเข้าใจง่าย\n5. **✅ Best Practices** — มาตรฐานของภาษา/เฟรมเวิร์ก\n6. **🔧 Suggested Fix** — โค้ดที่ปรับปรุงแล้ว (เขียนเป็น code block)\n\nกฎ: ทุกข้อต้องบอก "ทำไม" และ "แก้ยังไง" ห้ามบอกแค่ "ไม่ดี"`
+  },
+  {
+    id:'ads', icon:'fa-bullhorn', color:'var(--pink)', glow:'var(--pink-glow)',
+    title:'โฆษณาคลิกแรง', desc:'เขียนโฆษณา Facebook/TikTok หลายเวอร์ชัน แปลงสูง',
+    fields:[
+      {key:'product',label:'สินค้า/บริการ',type:'input',placeholder:'เช่น คอร์สเรียน Python ออนไลน์'},
+      {key:'usp',label:'จุดขายหลัก (1-3 ข้อ)',type:'textarea',placeholder:'เช่น\n1. เรียนจบได้จริงใน 4 สัปดาห์\n2. มีโปรเจกต์จริง 10 โปรเจกต์\n3. รับประกันว่าได้งาน'},
+      {key:'audience',label:'กลุ่มเป้าหมาย',type:'input',placeholder:'เช่น มือใหม่หัดเขียนโค้ด อายุ 20-30'},
+      {key:'platform',label:'แพลตฟอร์ม',type:'select',options:['Facebook','TikTok','Instagram','ทั้งหมด']},
+    ],
+    build:(f)=>`คุณเป็น Media Buyer + Copywriter ที่ทำโฆษณามี ROAS เฉลี่ย 5x+ มา 8 ปี\n\nสินค้า/บริการ: ${f.product}\nจุดขายหลัก:\n${f.usp}\nกลุ่มเป้าหมาย: ${f.audience}\nแพลตฟอร์ม: ${f.platform}\n\nจงเขียนโฆษณา 3 เวอร์ชัน:\n\n**เวอร์ชัน A — สั้นกระแทก (Hook → CTA)**\n- ไม่เกิน 3 บรรทัด\n- ใช้คำกระตุ้นอารมณ์\n\n**เวอร์ชัน B — เล่าเรื่อง (Problem → Journey → Solution → CTA)**\n- เริ่มจากปัญหาที่กลุ่มเป้าหมายเจอ\n- ดึงความรู้สึกก่อน เสนอทางออกทีหลัง\n\n**เวอร์ชัน C — ลิสต์ข้อดี (5 ข้อ + CTA)**\n- แต่ละข้อไม่เกิน 1 บรรทัด\n- ใช้ตัวเลข/ผลลัพธ์\n\nพร้อมแนะนำ:\n- รูป/วิดีโอที่ควรใช้ (อธิบายภาพ)\n- ช่วงเวลาโพสต์\n- งบเริ่มต้นที่แนะนำ/วัน\n- A/B Test แรกที่ควรลอง`
+  },
+  {
+    id:'summarize', icon:'fa-compress', color:'var(--purple)', glow:'var(--purple-glow)',
+    title:'สรุปให้กระชับ', desc:'แปลงข้อความยาวเป็นสรุปแบบต่างๆ',
+    fields:[
+      {key:'content',label:'ข้อความที่ต้องการสรุป',type:'textarea',placeholder:'วางบทความ/รายงาน/เมล์ยาวๆ ที่นี่...'},
+      {key:'format',label:'รูปแบบสรุป',type:'select',options:['3 ประโยค','5 สั้นๆ (Bullet points)','1 ย่อหน้า','ตารางเปรียบเทียบ','อธิบายให้เด็ก 5 ขวบเข้าใจ']},
+    ],
+    build:(f)=>`คุณเป็นนักสื่อสารที่เชี่ยวชาญการ "สรุปให้กระชับแต่ไม่หลอน"\n\nจงสรุปข้อความต่อไปนี้ในรูปแบบ: ${f.format}\n\n---\n${f.content}\n---\n\nกฎ:\n- ห้ามตัดข้อมูลสำคัญออก\n- ห้ามเพิ่มข้อมูลที่ไม่มีในต้นฉบับ\n- ใช้คำที่เข้าใจง่ายที่สุด\n- ถ้ามีตัวเลข/วันที่ ต้องเก็บไว้\n- เขียนให้อ่านจบใน 15 วินาที`
+  },
+  {
+    id:'email', icon:'fa-envelope-open-text', color:'var(--accent)', glow:'var(--accent-glow)',
+    title:'เขียนอีเมลเปิดอ่าน', desc:'อีเมลที่คนอ่านจบ + ตอบกลับ',
+    fields:[
+      {key:'purpose',label:'จุดประสงค์',type:'input',placeholder:'เช่น ขอนัดประชุม, ส่งโปรโพสัล, ตามงาน'},
+      {key:'to',label:'ส่งถึงใคร',type:'input',placeholder:'เช่น CEO, ลูกค้า, ทีม, อาจารย์'},
+      {key:'tone',label:'โทน',type:'select',options:['เป็นทางการ','กึ่งทางการ','เป็นกันเอง','เร่งด่วน']},
+      {key:'detail',label:'รายละเอียดเพิ่มเติม',type:'textarea',placeholder:'ข้อมูลที่อยากใส่... (ถ้ามี)'},
+    ],
+    build:(f)=>`คุณเป็นนักเขียนอีเมลมืออาชีพ อัตราเปิดอีเมลเฉลี่ย 60%+\n\nจุดประสงค์: ${f.purpose}\nส่งถึง: ${f.to}\nโทน: ${f.tone}\nรายละเอียดเพิ่มเติม: ${f.detail || 'ไม่มี'}\n\nจงเขียน:\n1. **Subject Line** — 3 ตัวเลือก (สั้น, ดึงดูด, ไม่ clickbait)\n2. **Preview Text** — ข้อความแสดงตัวอย่าง (ไม่เกิน 40 ตัวอักษร)\n3. **เนื้ออีเมล** — ไม่เกิน 5 ย่อหน้า, มี CTA ชัดเจน 1 จุด\n4. **Sign-off** — คำลงท้ายที่เหมาะสม\n\nกฎ:\n- ห้ามใช้คำว่า "เรียน คุณ..." ในเนื้ออีเมล\n- ประโยคแรกต้องดึงดูด ไม่ใช่ "เรียน... ฉันเขียนมาเพื่อ..."\n- ทุกย่อหน้าไม่เกิน 3 บรรทัด\n- CTA ต้องชัดเจนว่าให้ทำอะไร ภายในเมื่อไหร่`
+  },
+  {
+    id:'translate', icon:'fa-language', color:'var(--cyan)', glow:'var(--cyan-glow)',
+    title:'แปลภาษาสไตล์ Native', desc:'แปลไม่ใช่แค่คำต่อคำ แต่แปลให้เป็นธรรมชาติ',
+    fields:[
+      {key:'text',label:'ข้อความที่ต้องการแปล',type:'textarea',placeholder:'วางข้อความที่นี่...'},
+      {key:'from',label:'จากภาษา',type:'select',options:['ไทย','อังกฤษ','ญี่ปุ่น','เกาหลี','จีน']},
+      {key:'to',label:'เป็นภาษา',type:'select',options:['อังกฤษ','ไทย','ญี่ปุ่น','เกาหลี','จีน']},
+      {key:'style',label:'สไตล์',type:'select',options:['ธรรมดา','ทางการ','สแลง/พูดจริง','วิชาการ','Creative/Buzzword']},
+    ],
+    build:(f)=>`คุณเป็นนักแปลมืออาชีพที่เป็น Native Speaker ทั้ง 2 ภาษา\nคุณไม่แปล "คำต่อคำ" แต่แปล "ความหมายและความรู้สึก"\n\nจงแปลจาก ${f.from} เป็น ${f.to}\nสไตล์: ${f.style}\n\n---\n${f.text}\n---\n\nให้ตอบ:\n1. **คำแปล** — ข้อความที่แปลแล้ว (อ่านแล้วรู้สึกว่าคนพูดภาษานั้นเป็นภาษาแม่เขียน)\n2. **คำที่เลือกใช้แทน** — 3-5 คำ/วลี ที่คุณเลือกใช้แทนคำแปลตรงๆ พร้อมอธิบายว่าทำไม\n3. **หมายเหตุ** — ถ้ามีวลี/idiom ที่แปลยาก อธิบายเพิ่ม`
+  },
+  {
+    id:'pitch', icon:'fa-rocket', color:'var(--orange)', glow:'var(--orange-glow)',
+    title:'Pitch Deck 1 นาที', desc:'สร้างสคริปต์นำเสนอที่ทำให้นักลงทุน/เจ้านาย พิจารณา',
+    fields:[
+      {key:'idea',label:'ไอเดีย/โปรเจกต์',type:'textarea',placeholder:'อธิบายสั้นๆ ว่าทำอะไร แก้ปัญหาอะไร'},
+      {key:'target',label:'นำเสนอต่อใคร',type:'select',options:['นักลงทุน (Investor)','เจ้านาย (Boss)','ลูกค้า (Client)','ทีม (Team)','คณะกรรมการ (Committee)']},
+      {key:'time',label:'เวลา',type:'select',options:['30 วินาที (Elevator Pitch)','1 นาที','3 นาที','5 นาที']},
+    ],
+    build:(f)=>`คุณเป็น Pitch Coach ที่ช่วยสตาร์ทอัพระดมทุนได้รวมกว่า 500 ล้านบาท\n\nไอเดีย/โปรเจกต์: ${f.idea}\nนำเสนอต่อ: ${f.target}\nเวลา: ${f.time}\n\nจงเขียนสคริปต์ Pitch ตามโครง:\n1. **Hook** — ประโยคแรกที่ทำให้คนอยากฟังต่อ (ห้ามใช้ "สวัสดีครับ วันนี้ผมจะมานำเสนอ")\n2. **Problem** — ปัญหาที่แท้จริง (ทำให้คนรู้สึกว่า "ใช่! เจอปัญหานี้")\n3. **Solution** — แก้ยังไง (อธิบายให้เด็ก 10 ขวบเข้าใจได้)\n4. **Traction/Proof** — หลักฐาน/ตัวเลข ที่แสดงว่ามันได้ผล\n5. **Ask** — ขออะไร (เงิน? เวลา? โอกาส?) ชัดเจน บอกจำนวน\n\nกฎ: ทุกประโยคต้องมีพลัง ห้ามมีประโยคที่อ่านแล้วเฉยๆ แม้แต่ประโยคเดียว`
+  },
+  {
+    id:'rewrite', icon:'fa-wand-magic-sparkles', color:'var(--purple)', glow:'var(--purple-glow)',
+    title:'เขียนใหม่ให้เจ๋งกว่า', desc:'แปลงข้อความธรรมดาให้เป็นฉบับมือโปร',
+    fields:[
+      {key:'original',label:'ข้อความต้นฉบับ',type:'textarea',placeholder:'วางข้อความที่อยากเขียนใหม่...'},
+      {key:'goal',label:'อยากให้เป็นแบบไหน',type:'select',options:['เจ๋งขึ้น 10 เท่า','เป็นทางการ/สุภาพ','สั้นกระชับลง','ดึงอารมณ์มากขึ้น','เหมาะสำหรับโซเชียล']},
+    ],
+    build:(f)=>`คุณเป็นนักเขียนที่มีพรสวรรค์ในการ "เขียนใหม่ให้ดีกว่าเดิม"\n\nข้อความต้นฉบับ:\n---\n${f.original}\n---\n\nเป้าหมาย: ${f.goal}\n\nจงเขียนใหม่ 3 เวอร์ชัน:\n1. **เวอร์ชัน A** — ปรับแต่งนิดหน่อย (เก็บความหมายเดิม แต่เขียนให้ลื่นไหลขึ้น)\n2. **เวอร์ชัน B** — ปรับปานกลาง (เปลี่ยนโครงสร้าง ใช้คำที่มีพลังขึ้น)\n3. **เวอร์ชัน C** — รื้อเขียนใหม่ (เก็บใจความสำคัญ แต่เขียนแบบไม่เหมือนเดิมเลย)\n\nพร้อมอธิบายสั้นๆ ว่าแต่ละเวอร์ชันเปลี่ยนอะไรบ้าง`
+  },
+];
+
+// === สถานะ ===
+let currentSkill = null;
+
+// === อ้างอิง DOM ===
+const skillGrid = document.getElementById('skillGrid');
+const overlay = document.getElementById('overlay');
+const modalBox = document.getElementById('modalBox');
+const searchBar = document.getElementById('searchBar');
+const toastBox = document.getElementById('toastBox');
+
+// === แสดง Skill Cards ===
+function renderSkills() {
+  const q = searchBar.value.toLowerCase();
+  const filtered = skills.filter(s => s.title.toLowerCase().includes(q) || s.desc.toLowerCase().includes(q));
+  skillGrid.innerHTML = filtered.map(s => `
+    <div class="skill-card" style="--skill-c:${s.color}" onclick="openSkill('${s.id}')">
+      <div class="skill-icon" style="background:${s.glow};color:${s.color}"><i class="fa-solid ${s.icon}"></i></div>
+      <div class="skill-title">${s.title}</div>
+      <div class="skill-desc">${s.desc}</div>
+      <i class="fa-solid fa-arrow-right skill-arrow"></i>
+    </div>
+  `).join('');
+  if (!filtered.length) skillGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:60px 0;">ไม่พบทักษะที่ตรงกัน</div>';
+}
+
+// === เปิด Skill Modal ===
+function openSkill(id) {
+  const s = skills.find(x => x.id === id);
+  if (!s) return;
+  currentSkill = s;
+
+  const fieldsHtml = s.fields.map(f => {
+    if (f.type === 'select') {
+      return `<div class="field">
+        <div class="field-label"><i class="fa-solid fa-chevron-right"></i> ${f.label}</div>
+        <select class="field-select" id="f-${f.key}">${f.options.map(o => `<option>${o}</option>`).join('')}</select>
+      </div>`;
+    }
+    if (f.type === 'textarea') {
+      return `<div class="field">
+        <div class="field-label"><i class="fa-solid fa-chevron-right"></i> ${f.label}</div>
+        <textarea class="field-textarea" id="f-${f.key}" placeholder="${f.placeholder || ''}"></textarea>
+      </div>`;
+    }
+    return `<div class="field">
+      <div class="field-label"><i class="fa-solid fa-chevron-right"></i> ${f.label}</div>
+      <input class="field-input" id="f-${f.key}" placeholder="${f.placeholder || ''}">
+    </div>`;
+  }).join('');
+
+  modalBox.innerHTML = `
+    <div class="modal-head">
+      <div class="modal-head-left">
+        <div class="modal-icon" style="background:${s.glow};color:${s.color}"><i class="fa-solid ${s.icon}"></i></div>
+        <div>
+          <div class="modal-title">${s.title}</div>
+          <div class="modal-subtitle">${s.desc}</div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      ${fieldsHtml}
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>
+        <button class="btn btn-primary" onclick="executeSkill()"><i class="fa-solid fa-bolt"></i> สร้าง</button>
+      </div>
+      <div class="result-box" id="resultBox">
+        <div class="result-label"><i class="fa-solid fa-sparkles"></i> ผลลัพธ์</div>
+        <div class="result-text" id="resultText"></div>
+        <div class="result-actions">
+          <button class="btn-sm accent" onclick="copyResult()"><i class="fa-solid fa-copy"></i> คัดลอก</button>
+          <button class="btn-sm" onclick="openAI('chatgpt')"><i class="fa-solid fa-robot"></i> เปิด ChatGPT</button>
+          <button class="btn-sm" onclick="openAI('claude')"><i class="fa-solid fa-brain"></i> เปิด Claude</button>
+          <button class="btn-sm" onclick="openAI('gemini')"><i class="fa-solid fa-gem"></i> เปิด Gemini</button>
+        </div>
+        <div class="toggle-raw" onclick="toggleRaw()"><i class="fa-solid fa-eye"></i> <span id="rawLabel">ดู Prompt ดิบ</span></div>
+      </div>
+    </div>
+  `;
+  overlay.classList.add('show');
+}
+
+function closeModal() { overlay.classList.remove('show'); currentSkill = null; }
+overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// === สร้าง Prompt ===
+function executeSkill() {
+  if (!currentSkill) return;
+  const f = {};
+  let missing = false;
+  currentSkill.fields.forEach(field => {
+    const el = document.getElementById('f-' + field.key);
+    f[field.key] = el ? el.value.trim() : '';
+    if (!f[field.key] && field.type !== 'select') {
+      el.style.borderColor = 'var(--pink)';
+      el.style.boxShadow = '0 0 0 3px var(--pink-glow)';
+      missing = true;
+      setTimeout(() => { el.style.borderColor = ''; el.style.boxShadow = ''; }, 2000);
+    }
+  });
+  if (missing) { toast('กรอกข้อมูลให้ครบก่อนนะ', 'err'); return; }
+
+  const prompt = currentSkill.build(f);
+  const resultBox = document.getElementById('resultBox');
+  const resultText = document.getElementById('resultText');
+  resultText.textContent = prompt;
+  resultBox.classList.add('show');
+  resultBox.dataset.raw = prompt;
+  resultBox.dataset.mode = 'result';
+  document.getElementById('rawLabel').textContent = 'ดู Prompt ดิบ';
+  toast('สร้างเรียบร้อย!', 'ok');
+}
+
+// === สลับดู Prompt ดิบ ===
+function toggleRaw() {
+  const box = document.getElementById('resultBox');
+  const text = document.getElementById('resultText');
+  const label = document.getElementById('rawLabel');
+  if (box.dataset.mode === 'result') {
+    text.textContent = box.dataset.raw;
+    label.textContent = 'ดูผลลัพธ์';
+    box.dataset.mode = 'raw';
+  } else {
+    text.textContent = box.dataset.raw;
+    label.textContent = 'ดู Prompt ดิบ';
+    box.dataset.mode = 'result';
+  }
+}
+
+// === คัดลอก ===
+function copyResult() {
+  const text = document.getElementById('resultText').textContent;
+  navigator.clipboard.writeText(text).then(() => toast('คัดลอกแล้ว!', 'ok')).catch(() => {
+    const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); toast('คัดลอกแล้ว!', 'ok');
+  });
+}
+
+// === เปิด AI ===
+function openAI(which) {
+  const text = document.getElementById('resultText').textContent;
+  navigator.clipboard.writeText(text);
+  const urls = { chatgpt:'https://chatgpt.com/', claude:'https://claude.ai/new', gemini:'https://gemini.google.com/app' };
+  window.open(urls[which] || urls.chatgpt, '_blank');
+  toast('คัดลอกแล้ว วางใน ' + which + ' ได้เลย', 'ok');
+}
+
+// === Toast ===
+function toast(msg, type) {
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.innerHTML = `<i class="fa-solid ${type === 'ok' ? 'fa-circle-check' : 'fa-circle-exclamation'}"></i> ${msg}`;
+  toastBox.appendChild(t);
+  setTimeout(() => { t.style.animation = 'toastOut .3s ease forwards'; setTimeout(() => t.remove(), 300); }, 2200);
+}
+
+// === เริ่มต้น ===
+renderSkills();
+</script>
+</body>
+</html>
