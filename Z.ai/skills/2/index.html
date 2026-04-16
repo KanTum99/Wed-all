@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skill Studio Pro | Emerald Glass</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  :root {
+    --bg: #050505;
+    --glass: rgba(20, 20, 25, 0.6);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --card-bg: rgba(255, 255, 255, 0.03);
+    --text: #e0e0e0;
+    --muted: #888;
+    --emerald: #00e68a;
+    --emerald-dim: rgba(0, 230, 138, 0.15);
+    --neon-glow: 0 0 15px rgba(0, 230, 138, 0.3);
+    --radius: 16px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body {
+    font-family: 'Space Grotesk', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-image: 
+      radial-gradient(circle at 10% 20%, rgba(0, 230, 138, 0.08) 0%, transparent 20%),
+      radial-gradient(circle at 90% 80%, rgba(0, 100, 200, 0.08) 0%, transparent 20%);
+  }
+
+  /* === Scrollbar === */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--emerald-dim); border-radius: 10px; }
+
+  /* === Layout === */
+  .app { max-width: 1100px; margin: 0 auto; padding: 20px; }
+  
+  /* === Header === */
+  header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 20px 0; margin-bottom: 30px;
+    border-bottom: 1px solid var(--glass-border);
+  }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand-icon {
+    width: 40px; height: 40px; background: var(--emerald);
+    border-radius: 12px; display: flex; align-items: center; justify-content: center;
+    color: #000; font-weight: 800; box-shadow: var(--neon-glow);
+  }
+  .brand h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+  .brand h1 span { color: var(--emerald); }
+  
+  .header-actions { display: flex; gap: 10px; }
+  .btn-glass {
+    background: var(--glass); border: 1px solid var(--glass-border);
+    color: var(--text); padding: 8px 16px; border-radius: 10px;
+    font-size: 13px; cursor: pointer; transition: .2s; backdrop-filter: blur(10px);
+    display: flex; align-items: center; gap: 6px; font-family: inherit;
+  }
+  .btn-glass:hover { border-color: var(--emerald); color: var(--emerald); }
+  .btn-primary {
+    background: var(--emerald); color: #000; font-weight: 700; border: none;
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: var(--neon-glow); }
+
+  /* === Tabs === */
+  .tabs { display: flex; gap: 5px; margin-bottom: 30px; background: var(--glass); padding: 5px; border-radius: 12px; border: 1px solid var(--glass-border); width: fit-content; }
+  .tab {
+    padding: 8px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500;
+    transition: .2s; color: var(--muted);
+  }
+  .tab.active { background: rgba(0, 230, 138, 0.1); color: var(--emerald); font-weight: 600; }
+
+  /* === Grid === */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+  
+  .skill-card {
+    background: var(--card-bg); border: 1px solid var(--glass-border);
+    border-radius: var(--radius); padding: 24px; cursor: pointer;
+    transition: all .3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    position: relative; overflow: hidden;
+  }
+  .skill-card::before {
+    content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), rgba(0, 230, 138, 0.1), transparent 40%);
+    opacity: 0; transition: opacity .3s; pointer-events: none;
+  }
+  .skill-card:hover { transform: translateY(-5px); border-color: rgba(0, 230, 138, 0.3); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+  .skill-card:hover::before { opacity: 1; }
+  
+  .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
+  .card-icon {
+    width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+    font-size: 20px; background: var(--emerald-dim); color: var(--emerald);
+  }
+  .card-badge {
+    font-size: 10px; padding: 4px 8px; border-radius: 6px; background: rgba(255,255,255,0.05); color: var(--muted); text-transform: uppercase;
+  }
+  .card-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+  .card-desc { font-size: 13px; color: var(--muted); line-height: 1.5; margin-bottom: 20px; }
+  
+  .card-footer { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--muted); }
+  .card-footer i { margin-right: 4px; }
+
+  /* === Modal === */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
+    z-index: 100; display: none; align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: #111; border: 1px solid var(--glass-border); border-radius: 20px;
+    width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto;
+    animation: slideUp .3s ease;
+  }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+  .modal-header { padding: 24px; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center; }
+  .modal-title { font-size: 20px; font-weight: 700; }
+  .close-btn { background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer; }
+  .close-btn:hover { color: var(--text); }
+
+  .modal-body { padding: 24px; }
+  .form-group { margin-bottom: 16px; }
+  .label { font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: block; }
+  .input, .textarea, .select {
+    width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
+    border-radius: 10px; color: var(--text); font-size: 14px; font-family: inherit; outline: none;
+    transition: .2s;
+  }
+  .input:focus, .textarea:focus, .select:focus { border-color: var(--emerald); box-shadow: 0 0 0 3px var(--emerald-dim); }
+  .textarea { min-height: 100px; resize: vertical; font-family: 'JetBrains Mono', monospace; line-height: 1.6; }
+  
+  .modal-footer { padding: 20px 24px; border-top: 1px solid var(--glass-border); display: flex; justify-content: flex-end; gap: 10px; }
+
+  /* === Result Area === */
+  .result-area { margin-top: 20px; padding: 20px; background: rgba(0,0,0,0.3); border-radius: 12px; border: 1px solid var(--glass-border); display: none; }
+  .result-area.show { display: block; animation: fadeIn .3s; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .result-text { font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.6; white-space: pre-wrap; color: #d1d1d1; margin-bottom: 15px; }
+  .result-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  .btn-sm { padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid var(--glass-border); background: var(--glass); color: var(--text); transition: .2s; }
+  .btn-sm:hover { border-color: var(--emerald); color: var(--emerald); }
+  .btn-sm.fill { background: var(--emerald); color: #000; border: none; }
+  .btn-sm.fill:hover { opacity: 0.9; }
+
+  /* === Toast === */
+  .toast {
+    position: fixed; bottom: 30px; right: 30px; background: var(--glass); border: 1px solid var(--glass-border);
+    padding: 12px 20px; border-radius: 10px; font-size: 13px; z-index: 200;
+    backdrop-filter: blur(10px); animation: toastIn .3s ease;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .toast.success { border-left: 4px solid var(--emerald); }
+  .toast.error { border-left: 4px solid #ff4d6a; }
+
+  @keyframes toastIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+  /* Responsive */
+  @media(max-width:600px) { .grid { grid-template-columns: 1fr; } header { flex-direction: column; gap: 15px; align-items: flex-start; } }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <div class="brand">
+      <div class="brand-icon"><i class="fa-solid fa-bolt"></i></div>
+      <h1>Skill Studio <span>Pro</span></h1>
+    </div>
+    <div class="header-actions">
+      <button class="btn-glass" onclick="exportData()"><i class="fa-solid fa-download"></i> Export</button>
+      <button class="btn-glass" onclick="document.getElementById('importFile').click()"><i class="fa-solid fa-upload"></i> Import</button>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+      <button class="btn-glass btn-primary" onclick="switchTab('builder')"><i class="fa-solid fa-plus"></i> สร้าง Skill</button>
+    </div>
+  </header>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('library')">คลัง Skill</div>
+    <div class="tab" onclick="switchTab('builder')">Skill Builder</div>
+    <div class="tab" onclick="switchTab('history')">ประวัติ</div>
+  </div>
+
+  <!-- Content Area -->
+  <div id="view-library" class="view-content">
+    <div class="grid" id="skillGrid"></div>
+  </div>
+
+  <div id="view-builder" class="view-content" style="display:none">
+    <div style="max-width:600px; margin:0 auto; background:var(--card-bg); border:1px solid var(--glass-border); border-radius:var(--radius); padding:30px;">
+      <h2 style="margin-bottom:20px; font-size:20px;">สร้าง Skill ใหม่ (Auto-Form)</h2>
+      <p style="color:var(--muted); font-size:13px; margin-bottom:20px;">
+        ใส่ชื่อและ Prompt Template ระบบจะหาคำว่า <code style="background:var(--emerald-dim); color:var(--emerald); padding:2px 6px; border-radius:4px;">{{ตัวแปร}}</code> แล้วสร้างช่องกรอกให้อัตโนมัติ
+      </p>
+      
+      <div class="form-group">
+        <label class="label">ชื่อ Skill</label>
+        <input class="input" id="newSkillName" placeholder="เช่น สรุปข่าว AI">
+      </div>
+      
+      <div class="form-group">
+        <label class="label">Prompt Template (ใช้ {{ตัวแปร}} แทนช่องกรอก)</label>
+        <textarea class="textarea" id="newSkillPrompt" placeholder="เช่น สรุปข่าวเรื่อง {{หัวข้อข่าว}} ให้กระชับใน {{จำนวนคำ}} คำ สำหรับ {{กลุ่มเป้าหมาย}}"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="label">ไอคอน (FontAwesome Class)</label>
+        <input class="input" id="newSkillIcon" placeholder="เช่น fa-newspaper" value="fa-wand-magic-sparkles">
+      </div>
+
+      <button class="btn-glass btn-primary" style="width:100%; justify-content:center; padding:12px;" onclick="saveCustomSkill()">
+        <i class="fa-solid fa-floppy-disk"></i> บันทึก Skill ใหม่
+      </button>
+    </div>
+  </div>
+
+  <div id="view-history" class="view-content" style="display:none">
+    <div id="historyList" style="display:flex; flex-direction:column; gap:10px;"></div>
+    <div id="emptyHistory" style="text-align:center; color:var(--muted); padding:50px;">ยังไม่มีประวัติการใช้งาน</div>
+  </div>
+</div>
+
+<!-- Modal Use Skill -->
+<div class="modal-overlay" id="useModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Skill Name</div>
+      <button class="close-btn" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div id="modalFields"></div>
+      <div class="modal-footer" style="padding:0; border:none; margin-top:20px;">
+        <button class="btn-glass" onclick="closeModal()">ยกเลิก</button>
+        <button class="btn-glass btn-primary" onclick="generatePrompt()"><i class="fa-solid fa-bolt"></i> Generate</button>
+      </div>
+      
+      <div class="result-area" id="resultArea">
+        <div style="font-size:12px; color:var(--muted); margin-bottom:8px; font-weight:600;">PROMPT RESULT</div>
+        <div class="result-text" id="resultText"></div>
+        <div class="result-actions">
+          <button class="btn-sm fill" onclick="copyText('resultText')"><i class="fa-solid fa-copy"></i> คัดลอก</button>
+          <button class="btn-sm" onclick="openAI('chatgpt')"><i class="fa-brands fa-openai"></i> ChatGPT</button>
+          <button class="btn-sm" onclick="openAI('claude')"><i class="fa-solid fa-brain"></i> Claude</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // === Data Store ===
+  let skills = [
+    { id: 'blog', name: 'นักเขียนบล็อกมือโปร', icon: 'fa-pen-fancy', color: '#00e68a', desc: 'เขียนบทความ SEO ดึงดูด', template: 'คุณเป็นนักเขียนบล็อกมืออาชีพ\nเขียนเรื่อง "{{topic}}" สำหรับกลุ่มเป้าหมาย {{audience}}\nโทนเสียง: {{tone}}\nความยาว: {{length}}' },
+    { id: 'ads', name: 'โฆษณาคลิกแรง', icon: 'fa-bullhorn', color: '#ff4d8a', desc: 'เขียนแอด Facebook/TikTok', template: 'คุณเป็น Copywriter มือทอง\nเขียนโฆษณาสินค้า "{{product}}" จุดขายคือ {{usp}}\nกลุ่มเป้าหมาย: {{target}}\nแพลตฟอร์ม: {{platform}}' },
+    { id: 'code', name: 'รีวิวโค้ดเชิงลึก', icon: 'fa-code', color: '#00d4ff', desc: 'หาบั๊กและแนะนำการปรับปรุง', template: 'คุณเป็น Senior Dev\nรีวิวโค้ดภาษา {{lang}} ด้านล่างนี้:\n{{code}}\nระดับความเข้ม: {{level}}' },
+    { id: 'summarize', name: 'สรุปให้กระชับ', icon: 'fa-compress', color: '#a855f7', desc: 'ย่อข้อความยาวให้สั้นลง', template: 'สรุปข้อความต่อไปนี้ให้กระชับแบบ {{format}}:\n{{content}}' },
+    { id: 'email', name: 'เขียนอีเมลเปิดอ่าน', icon: 'fa-envelope', color: '#ff8a3d', desc: 'อีเมลที่คนอยากตอบกลับ', template: 'เขียนอีเมล {{purpose}} ส่งถึง {{to}}\nโทน: {{tone}}\nรายละเอียด: {{detail}}' },
+    { id: 'translate', name: 'แปลภาษา Native', icon: 'fa-language', color: '#00e68a', desc: 'แปลให้เหมือนเจ้าของภาษาพูด', template: 'แปลจาก {{from}} เป็น {{to}} แบบ {{style}}:\n{{text}}' },
+    { id: 'pitch', name: 'Pitch Deck 1 นาที', icon: 'fa-rocket', color: '#ff8a3d', desc: 'สคริปต์นำเสนอขายของ', template: 'เขียนสคริปต์ Pitch สำหรับ {{idea}} นำเสนอต่อ {{target}} ภายใน {{time}}' },
+    { id: 'rewrite', name: 'เขียนใหม่ให้เจ๋ง', icon: 'fa-wand-magic-sparkles', color: '#a855f7', desc: 'ปรับแก้ข้อความให้น่าสนใจขึ้น', template: 'เขียนใหม่ข้อความนี้ให้ {{goal}}:\n{{original}}' },
+    { id: 'brainstorm', name: 'ระดมไอเดีย', icon: 'fa-lightbulb', color: '#ffea00', desc: 'คิดไอเดียแหวกแนว', template: 'ระดมไอเดียเรื่อง {{problem}} จำนวน {{count}} ไอเดีย สไตล์ {{style}}' }
+  ];
+
+  let history = JSON.parse(localStorage.getItem('ss_history') || '[]');
+  let currentSkillId = null;
+
+  // === Init ===
+  function init() {
+    // Load custom skills
+    const custom = JSON.parse(localStorage.getItem('ss_custom') || '[]');
+    skills = [...skills, ...custom];
+    renderGrid();
+    renderHistory();
+  }
+
+  // === Render Grid ===
+  function renderGrid() {
+    const grid = document.getElementById('skillGrid');
+    grid.innerHTML = skills.map(s => `
+      <div class="skill-card" onmousemove="moveGlow(event, this)" onclick="openSkill('${s.id}')">
+        <div class="card-header">
+          <div class="card-icon" style="color:${s.color}; background:${s.color}22"><i class="fa-solid ${s.icon}"></i></div>
+          <div class="card-badge">Skill</div>
+        </div>
+        <div class="card-title">${s.name}</div>
+        <div class="card-desc">${s.desc}</div>
+        <div class="card-footer">
+          <span><i class="fa-solid fa-wand-magic-sparkles"></i> Auto-Form</span>
+          <span><i class="fa-solid fa-arrow-right"></i> ใช้งาน</span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function moveGlow(e, el) {
+    const rect = el.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    el.style.setProperty('--x', x + '%');
+    el.style.setProperty('--y', y + '%');
+  }
+
+  // === Tab Switching ===
+  function switchTab(tab) {
+    document.querySelectorAll('.view-content').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+    
+    document.getElementById('view-' + tab).style.display = 'block';
+    // Find tab index logic simplified
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(t => {
+        if(t.innerText.includes(tab === 'library' ? 'คลัง' : tab === 'builder' ? 'Builder' : 'ประวัติ')) t.classList.add('active');
+    });
+  }
+
+  // === Skill Logic ===
+  function openSkill(id) {
+    currentSkillId = id;
+    const s = skills.find(x => x.id === id);
+    if(!s) return;
+
+    document.getElementById('modalTitle').innerText = s.name;
+    
+    // Parse Template to Inputs
+    const fieldsHtml = parseTemplate(s.template);
+    document.getElementById('modalFields').innerHTML = fieldsHtml;
+    document.getElementById('resultArea').classList.remove('show');
+    document.getElementById('useModal').classList.add('show');
+  }
+
+  function parseTemplate(template) {
+    // Regex to find {{var}}
+    const regex = /{{(.*?)}}/g;
+    let match;
+    let html = '';
+    let lastIndex = 0;
+    
+    // We will just create inputs for every unique variable found
+    const vars = [];
+    while ((match = regex.exec(template)) !== null) {
+        if(!vars.includes(match[1].trim())) vars.push(match[1].trim());
+    }
+
+    vars.forEach(v => {
+        html += `
+        <div class="form-group">
+            <label class="label">${v}</label>
+            <input class="input" id="inp-${v}" placeholder="กรอก ${v}...">
+        </div>`;
+    });
+    return html;
+  }
+
+  function generatePrompt() {
+    const s = skills.find(x => x.id === currentSkillId);
+    let prompt = s.template;
+    
+    // Replace variables
+    const inputs = document.querySelectorAll('#modalFields .input');
+    inputs.forEach(inp => {
+        const key = inp.id.replace('inp-', '');
+        const val = inp.value.trim();
+        prompt = prompt.replace(new RegExp(`{{${key}}}`, 'g'), val || `[${key}]`);
+    });
+
+    document.getElementById('resultText').innerText = prompt;
+    document.getElementById('resultArea').classList.add('show');
+
+    // Save to history
+    addHistory(s.name, prompt);
+  }
+
+  function closeModal() {
+    document.getElementById('useModal').classList.remove('show');
+  }
+
+  // === Custom Skill Builder ===
+  function saveCustomSkill() {
+    const name = document.getElementById('newSkillName').value.trim();
+    const tpl = document.getElementById('newSkillPrompt').value.trim();
+    const icon = document.getElementById('newSkillIcon').value.trim() || 'fa-star';
+    
+    if(!name || !tpl) return showToast('กรอกชื่อและ Template ด้วยนะ', 'error');
+
+    const newSkill = {
+        id: 'custom_' + Date.now(),
+        name, icon, 
+        desc: 'Custom Skill',
+        color: '#00e68a',
+        template: tpl
+    };
+
+    skills.push(newSkill);
+    localStorage.setItem('ss_custom', JSON.stringify(skills.filter(s => s.id.startsWith('custom_'))));
+    
+    renderGrid();
+    showToast('สร้าง Skill สำเร็จ!', 'success');
+    
+    // Reset form
+    document.getElementById('newSkillName').value = '';
+    document.getElementById('newSkillPrompt').value = '';
+    switchTab('library');
+  }
+
+  // === History ===
+  function addHistory(skillName, prompt) {
+    history.unshift({ name: skillName, prompt, date: new Date().toLocaleString() });
+    if(history.length > 20) history.pop();
+    localStorage.setItem('ss_history', JSON.stringify(history));
+    renderHistory();
+  }
+
+  function renderHistory() {
+    const list = document.getElementById('historyList');
+    const empty = document.getElementById('emptyHistory');
+    
+    if(history.length === 0) {
+        list.style.display = 'none';
+        empty.style.display = 'block';
+        return;
+    }
+    
+    list.style.display = 'flex';
+    empty.style.display = 'none';
+    list.innerHTML = history.map(h => `
+        <div class="skill-card" style="cursor:default; transform:none; border-color:var(--glass-border);" onmousemove="" onclick="copyText(null, '${h.prompt.replace(/'/g, "\\'")}')">
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                <div style="font-weight:600;">${h.name}</div>
+                <div style="font-size:11px; color:var(--muted);">${h.date}</div>
+            </div>
+            <div style="font-size:12px; color:var(--muted); font-family:monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${h.prompt}</div>
+        </div>
+    `).join('');
+  }
+
+  // === Utils ===
+  function copyText(elementId, textOverride) {
+    const text = textOverride || document.getElementById(elementId).innerText;
+    navigator.clipboard.writeText(text).then(() => showToast('คัดลอกแล้ว!', 'success'));
+  }
+
+  function openAI(type) {
+    const text = document.getElementById('resultText').innerText;
+    navigator.clipboard.writeText(text);
+    const urls = { chatgpt: 'https://chatgpt.com/', claude: 'https://claude.ai/new', gemini: 'https://gemini.google.com/' };
+    window.open(urls[type], '_blank');
+    showToast('เปิด ' + type + ' พร้อมวาง Prompt', 'success');
+  }
+
+  function showToast(msg, type) {
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i> ${msg}`;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+  }
+
+  function exportData() {
+    const dataStr = JSON.stringify(skills, null, 2);
+    const blob = new Blob([dataStr], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'skill-studio-backup.json'; a.click();
+    showToast('Export สำเร็จ', 'success');
+  }
+
+  function importData(e) {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+        try {
+            const imported = JSON.parse(ev.target.result);
+            if(Array.isArray(imported)) {
+                // Merge logic: prevent duplicates
+                imported.forEach(item => {
+                    if(!skills.find(s => s.id === item.id)) skills.push(item);
+                });
+                localStorage.setItem('ss_custom', JSON.stringify(skills.filter(s => s.id.startsWith('custom_'))));
+                renderGrid();
+                showToast('Import สำเร็จ!', 'success');
+            }
+        } catch(err) { showToast('ไฟล์เสียหาย', 'error'); }
+    };
+    reader.readAsText(file);
+  }
+
+  // Start
+  init();
+</script>
+</body>
+</html>
