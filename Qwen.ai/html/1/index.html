@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkillForge — ศูนย์บัญชาการ AI & Termux</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<!-- Highlight.js for Code -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+<style>
+  :root {
+    --bg: #050508;
+    --bg-panel: rgba(15, 15, 25, 0.6);
+    --emerald: #00e68a;
+    --emerald-dim: rgba(0, 230, 138, 0.1);
+    --emerald-glow: 0 0 15px rgba(0, 230, 138, 0.2);
+    --text-main: #e8e8f0;
+    --text-muted: #8888a0;
+    --border: rgba(255, 255, 255, 0.08);
+    --font-ui: 'Space Grotesk', sans-serif;
+    --font-code: 'JetBrains Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  body {
+    background-color: var(--bg);
+    color: var(--text-main);
+    font-family: var(--font-ui);
+    height: 100vh;
+    display: flex;
+    overflow: hidden;
+    background-image: 
+      radial-gradient(circle at 10% 20%, rgba(0, 230, 138, 0.05), transparent 40%),
+      radial-gradient(circle at 90% 80%, rgba(0, 100, 255, 0.05), transparent 40%);
+  }
+
+  /* --- Sidebar --- */
+  .sidebar {
+    width: 260px;
+    background: rgba(10, 10, 15, 0.8);
+    backdrop-filter: blur(15px);
+    border-right: 1px solid var(--border);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .brand {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--emerald);
+    margin-bottom: 30px;
+    text-shadow: var(--emerald-glow);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .nav-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    padding: 12px 15px;
+    text-align: left;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.3s;
+    font-family: var(--font-ui);
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .nav-btn:hover, .nav-btn.active {
+    background: var(--emerald-dim);
+    color: var(--emerald);
+    border-left: 3px solid var(--emerald);
+  }
+
+  /* --- Main Content --- */
+  .main-content {
+    flex: 1;
+    padding: 30px;
+    overflow-y: auto;
+    position: relative;
+  }
+
+  .section {
+    display: none;
+    animation: fadeIn 0.4s ease;
+  }
+  .section.active { display: block; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  h2 { font-size: 1.8rem; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+
+  /* --- Forms & Inputs --- */
+  .form-group { margin-bottom: 20px; }
+  label { display: block; margin-bottom: 8px; color: var(--text-muted); font-size: 0.9rem; }
+  
+  input, select, textarea {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border);
+    padding: 12px;
+    border-radius: 8px;
+    color: white;
+    font-family: var(--font-ui);
+    transition: 0.3s;
+  }
+  
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--emerald);
+    box-shadow: var(--emerald-glow);
+  }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+  /* --- Cards --- */
+  .card {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  /* --- Buttons --- */
+  .btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-primary {
+    background: var(--emerald);
+    color: #000;
+    box-shadow: var(--emerald-glow);
+  }
+  .btn-primary:hover { background: #00ff99; }
+
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--emerald);
+    color: var(--emerald);
+  }
+  .btn-outline:hover { background: var(--emerald-dim); }
+
+  /* --- Output Area --- */
+  .output-container {
+    background: #0d0d12;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-top: 20px;
+  }
+
+  .output-header {
+    background: rgba(255,255,255,0.05);
+    padding: 10px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  .prompt-preview {
+    padding: 20px;
+    font-family: var(--font-code);
+    white-space: pre-wrap;
+    line-height: 1.6;
+    color: #d4d4d4;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  /* --- Tags & Badges --- */
+  .badge {
+    font-size: 0.75rem;
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin-right: 5px;
+    font-weight: bold;
+  }
+  .tag-claude { background: rgba(217, 119, 6, 0.2); color: #fbbf24; border: 1px solid rgba(217, 119, 6, 0.4); }
+  .tag-gpt { background: rgba(23, 162, 184, 0.2); color: #20c997; border: 1px solid rgba(23, 162, 184, 0.4); }
+  .tag-gemini { background: rgba(110, 66, 229, 0.2); color: #a78bfa; border: 1px solid rgba(110, 66, 229, 0.4); }
+
+  /* --- Iterative Refinement Chips --- */
+  .chips-container {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 15px;
+  }
+  .chip {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  .chip:hover { border-color: var(--emerald); color: var(--emerald); }
+
+  /* --- Terminal Simulation --- */
+  .terminal-window {
+    background: #000;
+    border-radius: 8px;
+    padding: 15px;
+    font-family: var(--font-code);
+    font-size: 0.9rem;
+    height: 300px;
+    overflow-y: auto;
+    border: 1px solid #333;
+  }
+  .term-line { margin-bottom: 5px; }
+  .term-prompt { color: var(--emerald); }
+  .term-cmd { color: #fff; }
+  .term-out { color: #aaa; }
+
+</style>
+</head>
+<body>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="brand">
+      <i class="fa-solid fa-terminal"></i> SkillForge
+    </div>
+    <button class="nav-btn active" onclick="showSection('generator')">
+      <i class="fa-solid fa-wand-magic-sparkles"></i> สร้าง Prompt
+    </button>
+    <button class="nav-btn" onclick="showSection('skills')">
+      <i class="fa-solid fa-layer-group"></i> จัดการ Skills
+    </button>
+    <button class="nav-btn" onclick="showSection('projects')">
+      <i class="fa-solid fa-folder-open"></i> โปรเจ็ค & โครงสร้าง
+    </button>
+    <button class="nav-btn" onclick="showSection('analyzer')">
+      <i class="fa-brands fa-linux"></i> วิเคราะห์ Termux
+    </button>
+    <button class="nav-btn" onclick="showSection('playground')">
+      <i class="fa-solid fa-code"></i> ทดสอบ Code
+    </button>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+    
+    <!-- 1. PROMPT GENERATOR -->
+    <div id="generator" class="section active">
+      <h2><i class="fa-solid fa-bolt"></i> สร้าง System/User Prompt</h2>
+      
+      <div class="grid-2">
+        <div class="form-group">
+          <label>บทบาทของ AI (Role)</label>
+          <select id="roleSelect">
+            <option value="FullStack Developer">FullStack Developer</option>
+            <option value="Cybersecurity Expert">Cybersecurity / Termux Expert</option>
+            <option value="Data Scientist">Data Scientist</option>
+            <option value="UI/UX Designer">UI/UX Designer</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>รูปแบบคำตอบ (Output Style)</label>
+          <select id="styleSelect">
+            <option value="Concise & Direct">กระชับ ได้ใจความ (Concise)</option>
+            <option value="Step-by-Step Tutorial">สอนทีละขั้นตอน (Tutorial)</option>
+            <option value="Socratic Method">ถามกลับเพื่อกระตุ้นความคิด (Socratic)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>รายละเอียดงาน (Task Description)</label>
+        <textarea id="taskInput" rows="4" placeholder="เช่น เขียนสคริปต์ Python สำหรับดึงข้อมูลหุ้น และวิเคราะห์แนวโน้ม..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Context เพิ่มเติม (Optional)</label>
+        <input type="text" id="contextInput" placeholder="เช่น ใช้กับ Termux บน Android 13, ไม่ใช้ Library ภายนอก">
+      </div>
+
+      <button class="btn btn-primary" onclick="generatePrompt()">
+        <i class="fa-solid fa-microchip"></i> Generate Prompt
+      </button>
+
+      <!-- Result Area -->
+      <div class="output-container" id="resultArea" style="display:none;">
+        <div class="output-header">
+          <span>
+            <span class="badge tag-claude">Claude Optimized</span>
+            <span class="badge tag-gpt">GPT-4 Ready</span>
+          </span>
+          <div>
+            <button class="btn btn-outline" style="padding: 4px 10px; font-size: 0.8rem;" onclick="copyToClipboard('sysOutput')">Copy System</button>
+            <button class="btn btn-outline" style="padding: 4px 10px; font-size: 0.8rem;" onclick="copyToClipboard('userOutput')">Copy User</button>
+            <button class="btn btn-outline" style="padding: 4px 10px; font-size: 0.8rem;" onclick="downloadFile()">Download .md</button>
+          </div>
+        </div>
+        <div style="padding: 15px; border-bottom: 1px solid var(--border);">
+          <strong style="color:var(--emerald)">System Prompt:</strong>
+          <div id="sysOutput" class="prompt-preview" style="max-height: 150px; font-size: 0.85rem;"></div>
+        </div>
+        <div style="padding: 15px;">
+          <strong style="color:var(--cyan)">User Prompt:</strong>
+          <div id="userOutput" class="prompt-preview" style="max-height: 150px; font-size: 0.85rem;"></div>
+        </div>
+        
+        <!-- Iterative Refinement -->
+        <div style="padding: 15px; background: rgba(0,0,0,0.2);">
+          <label style="margin-bottom: 10px;"><i class="fa-solid fa-arrows-rotate"></i> MTC Helper (Follow-up):</label>
+          <div class="chips-container">
+            <div class="chip" onclick="appendFollowUp('Refactor code for better performance')">Refactor Performance</div>
+            <div class="chip" onclick="appendFollowUp('Add Unit Tests')">Add Unit Tests</div>
+            <div class="chip" onclick="appendFollowUp('Explain logic like I am 5')">Explain Logic (ELI5)</div>
+            <div class="chip" onclick="appendFollowUp('Convert to Async/Await')">Make Async</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. SKILLS MANAGER -->
+    <div id="skills" class="section">
+      <h2><i class="fa-solid fa-book-journal-whills"></i> คลังทักษะ (Skills Repository)</h2>
+      <p style="color:var(--text-muted); margin-bottom: 20px;">เลือกทักษะเพื่อฝังลงใน System Prompt โดยอัตโนมัติ</p>
+      
+      <div class="grid-2">
+        <div class="card">
+          <h3><i class="fa-brands fa-python"></i> Python Automation</h3>
+          <p style="font-size:0.8rem; color:#888;">Expert in scripting, data scraping, and automation tools.</p>
+          <input type="checkbox" checked class="skill-check" value="Python Expert"> Active
+        </div>
+        <div class="card">
+          <h3><i class="fa-brands fa-react"></i> React & Tailwind</h3>
+          <p style="font-size:0.8rem; color:#888;">Modern frontend development with responsive design.</p>
+          <input type="checkbox" class="skill-check" value="React Expert"> Active
+        </div>
+        <div class="card">
+          <h3><i class="fa-solid fa-shield-halved"></i> CyberSec Basics</h3>
+          <p style="font-size:0.8rem; color:#888;">Network analysis, penetration testing concepts.</p>
+          <input type="checkbox" class="skill-check" value="Security Analyst"> Active
+        </div>
+        <div class="card">
+          <h3><i class="fa-solid fa-database"></i> SQL Optimization</h3>
+          <p style="font-size:0.8rem; color:#888;">Query optimization and database schema design.</p>
+          <input type="checkbox" class="skill-check" value="DBA Expert"> Active
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. PROJECT STRUCTURE -->
+    <div id="projects" class="section">
+      <h2><i class="fa-solid fa-sitemap"></i> สร้างโครงสร้างโปรเจ็ค</h2>
+      <div class="form-group">
+        <label>ชื่อโปรเจ็ค</label>
+        <input type="text" id="projName" placeholder="MyAwesomeApp">
+      </div>
+      <div class="form-group">
+        <label>ประเภทโปรเจ็ค</label>
+        <select id="projType">
+          <option value="web">Web Application (HTML/CSS/JS)</option>
+          <option value="python_cli">Python CLI Tool</option>
+          <option value="node_api">Node.js API Server</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="generateProjectStructure()">Generate Structure Tree</button>
+      
+      <div class="output-container" style="margin-top: 20px;">
+        <div class="prompt-preview" id="projectTreeOutput">
+          // โครงสร้างไฟล์จะปรากฏที่นี่...
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. TERMUX ANALYZER -->
+    <div id="analyzer" class="section">
+      <h2><i class="fa-brands fa-android"></i> Termux System Analyzer</h2>
+      <p style="color:var(--text-muted)">คำสั่งสำหรับตรวจสอบสภาพแวดล้อม Termux ของคุณ เพื่อส่งให้ AI วิเคราะห์ปัญหา</p>
+      
+      <div class="card">
+        <h3>1. คำสั่งรวบรวมข้อมูล (Run in Termux)</h3>
+        <code style="background:#222; padding:10px; display:block; border-radius:5px; color:var(--emerald); margin: 10px 0;">
+          pkg info > sys_info.txt && uname -a >> sys_info.txt && df -h >> sys_info.txt && cat sys_info.txt
+        </code>
+        <button class="btn btn-outline" onclick="copyToClipboard('termuxCmd')">Copy Command</button>
+        <textarea id="termuxCmd" style="position:absolute; left:-9999px;">pkg info > sys_info.txt && uname -a >> sys_info.txt && df -h >> sys_info.txt && cat sys_info.txt</textarea>
+      </div>
+
+      <div class="form-group">
+        <label>วางผลลัพธ์ (Paste Output Here)</label>
+        <textarea id="termuxLog" rows="6" placeholder="Paste log จาก Termux ที่นี่..."></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="analyzeTermuxLog()">
+        <i class="fa-solid fa-stethoscope"></i> วิเคราะห์ด้วย AI
+      </button>
+      
+      <div id="analysisResult" class="card" style="margin-top:20px; display:none; border-color:var(--emerald);">
+        <h3><i class="fa-solid fa-check-circle"></i> ผลการวิเคราะห์เบื้องต้น</h3>
+        <p id="analysisText" style="font-size:0.9rem; line-height:1.5;"></p>
+      </div>
+    </div>
+
+    <!-- 5. CODE PLAYGROUND -->
+    <div id="playground" class="section">
+      <h2><i class="fa-solid fa-laptop-code"></i> Code Sandbox</h2>
+      <div class="grid-2" style="height: 70vh;">
+        <div style="display:flex; flex-direction:column;">
+          <label>Editor (JavaScript)</label>
+          <textarea id="codeEditor" style="flex:1; font-family:var(--font-code); background:#1e1e1e; color:#d4d4d4; border:none; resize:none; padding:15px;">console.log("Hello SkillForge!");
+          
+function sum(a, b) {
+  return a + b;
+}
+
+console.log("Sum:", sum(5, 10));</textarea>
+          <button class="btn btn-primary" style="margin-top:10px;" onclick="runCode()">
+            <i class="fa-solid fa-play"></i> Run Code
+          </button>
+        </div>
+        <div style="display:flex; flex-direction:column;">
+          <label>Terminal Output</label>
+          <div id="terminalOutput" class="terminal-window">
+            <div class="term-line"><span class="term-prompt">user@skillforge:~$</span> <span class="term-cmd">node script.js</span></div>
+            <!-- Output will appear here -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+<script>
+  // --- Navigation Logic ---
+  function showSection(id) {
+    document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    
+    document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+  }
+
+  // --- Prompt Generation Logic ---
+  function generatePrompt() {
+    const role = document.getElementById('roleSelect').value;
+    const style = document.getElementById('styleSelect').value;
+    const task = document.getElementById('taskInput').value;
+    const context = document.getElementById('contextInput').value;
+
+    // Collect Skills
+    let skills = [];
+    document.querySelectorAll('.skill-check:checked').forEach(cb => skills.push(cb.value));
+    const skillString = skills.length > 0 ? `Possessing skills: ${skills.join(', ')}.` : "";
+
+    if(!task) { alert("กรุณาระบุรายละเอียดงาน (Task)"); return; }
+
+    // Construct System Prompt
+    const sysPrompt = `You are an expert ${role}. ${skillString}
+Your goal is to assist the user with high-quality, professional solutions.
+Communication Style: ${style}.
+Constraints: Ensure code is efficient, well-commented, and follows best practices.`;
+
+    // Construct User Prompt
+    const userPrompt = `**Task:** ${task}
+**Context:** ${context || "General environment"}
+
+Please provide the solution including necessary code snippets and explanations.`;
+
+    // Display
+    document.getElementById('sysOutput').innerText = sysPrompt;
+    document.getElementById('userOutput').innerText = userPrompt;
+    document.getElementById('resultArea').style.display = 'block';
+  }
+
+  // --- Utilities ---
+  function copyToClipboard(elementId) {
+    const text = document.getElementById(elementId).innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      alert("Copied to clipboard!");
+    });
+  }
+
+  function downloadFile() {
+    const sys = document.getElementById('sysOutput').innerText;
+    const user = document.getElementById('userOutput').innerText;
+    const content = `# System Prompt\n${sys}\n\n# User Prompt\n${user}`;
+    
+    const blob = new Blob([content], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'skillforge_prompt.md';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function appendFollowUp(text) {
+    const current = document.getElementById('userOutput').innerText;
+    document.getElementById('userOutput').innerText = current + `\n\n**Follow-up Request:** ${text}`;
+  }
+
+  // --- Project Generator ---
+  function generateProjectStructure() {
+    const name = document.getElementById('projName').value || "Project";
+    const type = document.getElementById('projType').value;
+    let tree = "";
+
+    if(type === 'web') {
+      tree = `${name}/\n├── index.html\n├── css/\n│   └── style.css\n├── js/\n│   └── app.js\n└── assets/\n    └── images/`;
+    } else if (type === 'python_cli') {
+      tree = `${name}/\n├── main.py\n├── requirements.txt\n├── utils/\n│   ├── __init__.py\n│   └── helpers.py\n└── README.md`;
+    } else {
+      tree = `${name}/\n├── package.json\n├── server.js\n├── routes/\n│   └── api.js\n└── .env`;
+    }
+    document.getElementById('projectTreeOutput').innerText = tree;
+  }
+
+  // --- Termux Analyzer Mock ---
+  function analyzeTermuxLog() {
+    const log = document.getElementById('termuxLog').value;
+    if(!log) { alert("กรุณาใส่ Log ก่อน"); return; }
+    
+    const resultDiv = document.getElementById('analysisResult');
+    const textDiv = document.getElementById('analysisText');
+    
+    resultDiv.style.display = 'block';
+    textDiv.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> กำลังวิเคราะห์...";
+
+    setTimeout(() => {
+      let analysis = "";
+      if(log.includes("Error") || log.includes("E: ")) {
+        analysis = "ตรวจพบข้อผิดพลาด (Errors) ในระบบแพ็กเกจ แนะนำให้รันคำสั่ง: <br><code>pkg upgrade && pkg install -f</code> เพื่อซ่อมแซม dependencies ที่ขาดหาย";
+      } else if (log.includes("permission denied")) {
+        analysis = "พบปัญหา Permission Denied กรุณาตรวจสอบสิทธิ์การเข้าถึงไฟล์ หรือใช้ <code>chmod +x filename</code>";
+      } else {
+        analysis = "ระบบดูปกติ (System looks stable) แต่แนะนำให้อัปเดตแพ็กเกจเป็นประจำด้วย <code>pkg update</code>";
+      }
+      textDiv.innerHTML = analysis;
+    }, 1500);
+  }
+
+  // --- Code Runner (Mock) ---
+  function runCode() {
+    const code = document.getElementById('codeEditor').value;
+    const term = document.getElementById('terminalOutput');
+    
+    // Clear previous output except header
+    term.innerHTML = '<div class="term-line"><span class="term-prompt">user@skillforge:~$</span> <span class="term-cmd">node script.js</span></div>';
+
+    try {
+      // Capture console.log
+      const originalLog = console.log;
+      let logs = [];
+      console.log = function(...args) {
+        logs.push(args.join(' '));
+      };
+
+      // Execute (Note: eval is dangerous in production, used here for demo sandbox)
+      // eslint-disable-next-line no-eval
+      eval(code); 
+
+      // Restore and Print
+      console.log = originalLog;
+      logs.forEach(l => {
+        term.innerHTML += `<div class="term-line term-out">${l}</div>`;
+      });
+      term.innerHTML += `<div class="term-line term-prompt">user@skillforge:~$</div>`;
+
+    } catch (e) {
+      term.innerHTML += `<div class="term-line" style="color:#ff4d8a">Error: ${e.message}</div>`;
+    }
+  }
+</script>
+
+</body>
+</html>
