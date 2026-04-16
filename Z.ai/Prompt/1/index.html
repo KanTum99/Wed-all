@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ktum787 | Termux Master & CLI Dev</title>
+    <!-- นำเข้าฟอนต์ Google Fonts (Kanit สำหรับไทย, JetBrains Mono สำหรับโค้ด) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Kanit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <!-- ไอคอนจาก FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* --- CSS Variables & Reset --- */
+        :root {
+            --bg-color: #0d1117; /* GitHub Dark Dimmed */
+            --card-bg: #161b22;
+            --border-color: #30363d;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent-color: #2ea043; /* Terminal Green */
+            --accent-hover: #3fb950;
+            --highlight-color: #58a6ff; /* Blue */
+            --danger-color: #da3633;
+            --font-main: 'Kanit', sans-serif;
+            --font-code: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        a { text-decoration: none; color: inherit; transition: 0.3s; }
+        ul { list-style: none; }
+
+        /* --- Layout Container --- */
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* --- Header / Profile Section --- */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 40px 0;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .profile-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 3px solid var(--accent-color);
+            object-fit: cover;
+        }
+
+        .profile-text h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        .profile-text h1 span {
+            color: var(--accent-color);
+        }
+
+        .profile-text p {
+            color: var(--text-secondary);
+            font-family: var(--font-code);
+            font-size: 0.9rem;
+        }
+
+        .social-links a {
+            background: var(--card-bg);
+            padding: 10px 20px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .social-links a:hover {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        /* --- Prompt Channel Section (Terminal Style) --- */
+        .prompt-section {
+            background: #000;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            margin-bottom: 50px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .prompt-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+
+        .prompt-title {
+            font-family: var(--font-code);
+            color: var(--accent-color);
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        .terminal-input-area {
+            font-family: var(--font-code);
+            color: #fff;
+        }
+
+        .input-line {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .prompt-symbol {
+            color: var(--accent-color);
+            margin-right: 10px;
+            user-select: none;
+        }
+
+        #prompt-input {
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-family: var(--font-code);
+            font-size: 1rem;
+            width: 100%;
+            outline: none;
+        }
+
+        .prompt-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .btn {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: var(--font-main);
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--text-secondary);
+            color: var(--text-secondary);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--text-primary);
+            color: var(--text-primary);
+        }
+
+        /* --- Content Grid --- */
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 25px;
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: var(--highlight-color);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .card-icon {
+            font-size: 1.8rem;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            background: rgba(88, 166, 255, 0.1);
+            color: var(--highlight-color);
+        }
+
+        .card h2 {
+            font-size: 1.4rem;
+            font-weight: 600;
+        }
+
+        .card p {
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+        }
+
+        /* Code Blocks inside Cards */
+        .code-block {
+            background: #0d1117;
+            border-radius: 6px;
+            padding: 15px;
+            font-family: var(--font-code);
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            position: relative;
+            margin-bottom: 15px;
+        }
+
+        .code-block::before {
+            content: 'bash';
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .command { color: var(--accent-color); }
+        .arg { color: var(--highlight-color); }
+        .comment { color: #6e7681; font-style: italic; }
+
+        /* --- Warning/Disadvantage Section --- */
+        .warning-card {
+            border-left: 4px solid var(--danger-color);
+        }
+        .warning-card .card-icon {
+            background: rgba(218, 54, 51, 0.1);
+            color: var(--danger-color);
+        }
+
+        /* --- Footer --- */
+        footer {
+            margin-top: 60px;
+            text-align: center;
+            padding: 20px;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* --- Responsive --- */
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                text-align: center;
+            }
+            .profile-info {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Header Profile -->
+    <header>
+        <div class="profile-info">
+            <!-- Avatar Placeholder -->
+            <img src="https://picsum.photos/seed/ktum787/200/200" alt="Ktum787 Avatar" class="avatar">
+            <div class="profile-text">
+                <h1>Ktum<span>787</span></h1>
+                <p>Full Stack CLI Developer | Termux Enthusiast</p>
+                <p style="margin-top: 5px; color: var(--accent-color);">> กรูรู้มาสอน</p>
+            </div>
+        </div>
+        <div class="social-links">
+            <a href="https://github.com/Ktum787" target="_blank">
+                <i class="fab fa-github"></i> GitHub Profile
+            </a>
+        </div>
+    </header>
+
+    <!-- Prompt Channel / Terminal Input -->
+    <section class="prompt-section">
+        <div class="prompt-header">
+            <span class="prompt-title"><i class="fas fa-terminal"></i> AI PROMPT GENERATOR</span>
+            <span style="color: #555; font-size: 0.8rem;">v1.0.4</span>
+        </div>
+        <div class="terminal-input-area">
+            <div class="input-line">
+                <span class="prompt-symbol">root@ktum-termux:~#</span>
+                <input type="text" id="prompt-input" placeholder="พิมพ์ Prompt สำหรับเขียนสคริปต์ หรือถามปัญหา Termux ที่นี่... (เช่น: 'สอนวิธีสร้าง CLI โปรเจคด้วย Node.js')">
+            </div>
+            <div class="prompt-actions">
+                <button class="btn" onclick="generatePrompt()">
+                    <i class="fas fa-bolt"></i> สร้าง / คัดลอก
+                </button>
+                <button class="btn btn-outline" onclick="clearPrompt()">
+                    <i class="fas fa-eraser"></i> ล้างหน้าจอ
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content Grid -->
+    <main class="content-grid">
+
+        <!-- Topic 1: Installation -->
+        <article class="card">
+            <div class="card-header">
+                <div class="card-icon"><i class="fab fa-android"></i></div>
+                <h2>การติดตั้ง Termux</h2>
+            </div>
+            <p>วิธีติดตั้ง Termux ให้เสถียรและพร้อมใช้งาน ห้ามโหลดจาก Play Store เพราะเก่าเกินไป</p>
+            <div class="code-block">
+                <div class="comment"># 1. ดาวน์โหลดจาก F-Droid หรือ Github Releases</div>
+                <span class="command">pkg</span> update && <span class="command">pkg</span> upgrade<br>
+                <span class="command">pkg</span> install <span class="arg">git</span> <span class="arg">python</span> <span class="arg">nodejs</span>
+            </div>
+            <button class="btn btn-outline" style="font-size: 0.8rem;" onclick="copyCode(this)">
+                <i class="far fa-copy"></i> คัดลอกคำสั่ง
+            </button>
+        </article>
+
+        <!-- Topic 2: Customization -->
+        <article class="card">
+            <div class="card-header">
+                <div class="card-icon"><i class="fas fa-palette"></i></div>
+                <h2>แต่ง Termux เท่ๆ</h2>
+            </div>
+            <p>เปลี่ยนธีมเป็น Oh My Zsh ติดตั้งฟอนต์ และจัดการสีสันให้ดูเป็นโปร</p>
+            <div class="code-block">
+                <span class="command">sh</span> -c <span class="arg">"$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"</span><br>
+                <span class="command">pkg</span> install <span class="arg">neofetch</span><br>
+                <span class="comment"># แก้ไขไฟล์ .zshrc เพื่อใส่ Theme</span>
+            </div>
+            <button class="btn btn-outline" style="font-size: 0.8rem;" onclick="copyCode(this)">
+                <i class="far fa-copy"></i> คัดลอกคำสั่ง
+            </button>
+        </article>
+
+        <!-- Topic 3: CLI Project -->
+        <article class="card">
+            <div class="card-header">
+                <div class="card-icon"><i class="fas fa-code"></i></div>
+                <h2>สร้างโปรเจค CLI</h2>
+            </div>
+            <p>เริ่มต้นเขียนเครื่องมือ Command Line Interface ด้วย Node.js บนมือถือ</p>
+            <div class="code-block">
+                <span class="command">mkdir</span> my-cli-tool && <span class="command">cd</span> my-cli-tool<br>
+                <span class="command">npm</span> init -y<br>
+                <span class="command">npm</span> install <span class="arg">chalk</span> <span class="arg">commander</span> <span class="arg">ora</span>
+            </div>
+            <button class="btn btn-outline" style="font-size: 0.8rem;" onclick="copyCode(this)">
+                <i class="far fa-copy"></i> คัดลอกคำสั่ง
+            </button>
+        </article>
+
+        <!-- Topic 4: Disadvantages -->
+        <article class="card warning-card">
+            <div class="card-header">
+                <div class="card-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                <h2>ข้อบกพร่อง & ข้อควรระวัง</h2>
+            </div>
+            <p>อย่างที่กรูบอก... Termux ไม่ใช่ magic box มันมีเรื่องที่ต้องยอมรับ</p>
+            <ul style="list-style: disc; padding-left: 20px; color: var(--text-secondary); font-size: 0.9rem;">
+                <li style="margin-bottom: 8px;"><strong style="color:var(--text-primary)">แบตหมดเร็ว:</strong> การคอมไพล์โค้ดหรือรันสคริปต์หนักๆ กินแบตมหาศาล</li>
+                <li style="margin-bottom: 8px;"><strong style="color:var(--text-primary)">Update เจ็บ:</strong> บางครั้งอัปเดตแล้วเกิด Bug หรือ Environment พังได้</li>
+                <li style="margin-bottom: 8px;"><strong style="color:var(--text-primary)">No Root Default:</strong> ถ้าอยากเล่นขั้นสูงต้อง Root เครื่องก่อน (Proot ก็ได้แต่จำกัด)</li>
+                <li><strong style="color:var(--text-primary)">Keyboard เล่นงาน:</strong> คีย์บอร์ดมือถือไม่เหมาะกับการเขียนโค้ดยาวๆ แนะนำใช้จอยหรือคีย์บอร์ดภายนอก</li>
+            </ul>
+        </article>
+
+    </main>
+
+    <footer>
+        <p>Created by <span style="color: var(--accent-color);">Ktum787</span> | Localhost :3000 Style</p>
+        <p style="font-size: 0.8rem; margin-top: 5px;">&copy; 2023 All rights reserved.</p>
+    </footer>
+</div>
+
+<script>
+    // Simple interaction for the Prompt Channel
+    function generatePrompt() {
+        const input = document.getElementById('prompt-input');
+        const val = input.value;
+        
+        if (!val) {
+            alert("กรุณาพิมพ์คำสั่งหรือ Prompt ก่อนครับ!");
+            return;
+        }
+
+        // Simulate "Processing"
+        const originalPlaceholder = input.placeholder;
+        input.value = "";
+        input.placeholder = "กำลังประมวลผล Prompt...";
+        
+        setTimeout(() => {
+            // Mock success
+            input.placeholder = "Prompt พร้อมแล้ว! คัดลอกไปใช้ได้เลย";
+            alert("Generated Prompt: \n" + val + "\n\n(จำลองการสร้าง Prompt สำหรับ Demo)");
+            input.placeholder = originalPlaceholder;
+            input.focus();
+        }, 800);
+    }
+
+    function clearPrompt() {
+        const input = document.getElementById('prompt-input');
+        input.value = "";
+        input.focus();
+    }
+
+    // Function to copy code blocks
+    function copyCode(btn) {
+        // Find the code block sibling
+        const codeBlock = btn.previousElementSibling;
+        const text = codeBlock.innerText;
+        
+        navigator.clipboard.writeText(text).then(() => {
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check"></i> คัดลอกแล้ว';
+            btn.style.color = 'var(--accent-color)';
+            btn.style.borderColor = 'var(--accent-color)';
+            
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.style.color = '';
+                btn.style.borderColor = '';
+            }, 2000);
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+        });
+    }
+</script>
+
+</body>
+  </html>
