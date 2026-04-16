@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkillForge — ศูนย์บัญชาการ AI</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<!-- Syntax Highlighting -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+<style>
+  :root {
+    --bg: #050508;
+    --bg2: #0a0a10;
+    --bg3: #0f0f18;
+    --card: rgba(18, 18, 28, 0.6);
+    --card-hover: rgba(25, 25, 40, 0.8);
+    --card-border: rgba(255, 255, 255, 0.06);
+    --card-border-hover: rgba(0, 230, 138, 0.3);
+    --text: #e8e8f0;
+    --text-dim: #8888a0;
+    --text-muted: #555570;
+    --emerald: #00e68a;
+    --emerald-dim: rgba(0, 230, 138, 0.12);
+    --emerald-glow: 0 0 20px rgba(0, 230, 138, 0.25);
+    --emerald-strong: #00c87a;
+    --cyan: #00d4ff;
+    --cyan-dim: rgba(0, 212, 255, 0.12);
+    --pink: #ff4d8a;
+    --pink-dim: rgba(255, 77, 138, 0.12);
+    --orange: #ff8a3d;
+    --purple: #a855f7;
+    --yellow: #ffea00;
+    --radius: 14px;
+    --radius-sm: 10px;
+    --font-ui: 'Space Grotesk', sans-serif;
+    --font-code: 'JetBrains Mono', monospace;
+    --sidebar-width: 260px;
+    --header-height: 64px;
+    --transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
+
+  body {
+    font-family: var(--font-ui);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-image:
+      radial-gradient(circle at 15% 25%, rgba(0, 230, 138, 0.05) 0%, transparent 25%),
+      radial-gradient(circle at 85% 75%, rgba(0, 100, 200, 0.04) 0%, transparent 25%),
+      radial-gradient(circle at 50% 50%, rgba(168, 85, 247, 0.03) 0%, transparent 40%);
+    display: flex;
+  }
+
+  /* === Scrollbar === */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--emerald); }
+
+  /* === Sidebar === */
+  .sidebar {
+    width: var(--sidebar-width);
+    background: rgba(5, 5, 8, 0.8);
+    backdrop-filter: blur(20px);
+    border-right: 1px solid var(--card-border);
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    padding: 24px;
+    transition: var(--transition);
+  }
+
+  .brand {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 40px;
+    letter-spacing: -0.5px;
+  }
+  .brand i { color: var(--emerald); text-shadow: var(--emerald-glow); }
+
+  .nav-menu { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .nav-item {
+    padding: 12px 16px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    color: var(--text-dim);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: var(--transition);
+    border: 1px solid transparent;
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.03); color: var(--text); }
+  .nav-item.active {
+    background: var(--emerald-dim);
+    color: var(--emerald);
+    border-color: rgba(0, 230, 138, 0.1);
+  }
+
+  .sidebar-footer {
+    margin-top: auto;
+    border-top: 1px solid var(--card-border);
+    padding-top: 20px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  /* === Main Content === */
+  .main-content {
+    margin-left: var(--sidebar-width);
+    flex: 1;
+    padding: 32px;
+    width: calc(100% - var(--sidebar-width));
+  }
+
+  .header {
+    margin-bottom: 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .page-title { font-size: 2rem; font-weight: 600; }
+  .page-subtitle { color: var(--text-dim); margin-top: 4px; }
+
+  /* === Glass Cards === */
+  .glass-panel {
+    background: var(--card);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 24px;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+  }
+  .glass-panel:hover { border-color: var(--card-border-hover); box-shadow: 0 10px 40px -10px rgba(0,0,0,0.5); }
+
+  /* === Grid Layout === */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+
+  /* === Form Elements === */
+  .form-group { margin-bottom: 20px; }
+  .form-label { display: block; color: var(--text-dim); margin-bottom: 8px; font-size: 0.9rem; font-weight: 500; }
+  
+  .input-glass, .select-glass, .textarea-glass {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: var(--font-ui);
+    font-size: 0.95rem;
+    transition: var(--transition);
+  }
+  .input-glass:focus, .select-glass:focus, .textarea-glass:focus {
+    border-color: var(--emerald);
+    box-shadow: 0 0 0 2px rgba(0, 230, 138, 0.1);
+  }
+  .textarea-glass { min-height: 120px; resize: vertical; font-family: var(--font-code); font-size: 0.85rem; line-height: 1.6; }
+
+  /* === Buttons === */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    font-size: 0.9rem;
+    transition: var(--transition);
+    text-decoration: none;
+  }
+  .btn-primary {
+    background: var(--emerald);
+    color: #000;
+    box-shadow: var(--emerald-glow);
+  }
+  .btn-primary:hover { background: var(--emerald-strong); transform: translateY(-1px); }
+  
+  .btn-secondary {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text);
+    border: 1px solid var(--card-border);
+  }
+  .btn-secondary:hover { background: rgba(255, 255, 255, 0.1); border-color: var(--text-dim); }
+
+  .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+  .btn-block { width: 100%; justify-content: center; }
+
+  /* === Tags === */
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-family: var(--font-code);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .tag-claude { background: rgba(200, 160, 255, 0.15); color: #d4baff; border: 1px solid rgba(200, 160, 255, 0.3); }
+  .tag-gpt { background: rgba(0, 180, 255, 0.15); color: #80dfff; border: 1px solid rgba(0, 180, 255, 0.3); }
+  .tag-gemini { background: rgba(255, 200, 0, 0.15); color: #ffd680; border: 1px solid rgba(255, 200, 0, 0.3); }
+
+  /* === Output Area === */
+  .output-container {
+    background: #0d0d12;
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    position: relative;
+  }
+  .output-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .output-title { font-family: var(--font-code); font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; }
+  
+  .prompt-preview {
+    font-family: var(--font-code);
+    font-size: 0.9rem;
+    color: #d4d4d8;
+    white-space: pre-wrap;
+    line-height: 1.7;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+  .prompt-preview strong { color: var(--emerald); }
+
+  /* === MTC Helper (Follow-up) === */
+  .follow-up-section { margin-top: 20px; }
+  .follow-up-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+  .chip {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--card-border);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .chip:hover { background: var(--emerald-dim); border-color: var(--emerald); color: var(--emerald); }
+  .chip i { font-size: 0.7rem; }
+
+  /* === Code Sandbox === */
+  .editor-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    height: 600px;
+  }
+  .code-area {
+    flex: 1;
+    background: #0d0d12;
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    font-family: var(--font-code);
+    font-size: 0.9rem;
+    color: var(--text);
+    resize: none;
+  }
+  .console-output {
+    height: 150px;
+    background: #000;
+    border-top: 1px solid #333;
+    padding: 12px;
+    font-family: var(--font-code);
+    font-size: 0.8rem;
+    color: #0f0;
+    overflow-y: auto;
+  }
+
+  /* === Toast Notification === */
+  .toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .toast {
+    background: rgba(15, 15, 24, 0.95);
+    backdrop-filter: blur(10px);
+    border-left: 4px solid var(--emerald);
+    color: var(--text);
+    padding: 16px 20px;
+    border-radius: var(--radius-sm);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 300px;
+    animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .sidebar { transform: translateX(-100%); width: 0; padding: 0; }
+    .main-content { margin-left: 0; width: 100%; padding: 20px; }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="brand">
+      <i class="fa-solid fa-cube"></i> SkillForge
+    </div>
+    <ul class="nav-menu">
+      <li class="nav-item active" onclick="switchView('prompt-builder', this)">
+        <i class="fa-solid fa-wand-magic-sparkles"></i> Prompt Builder
+      </li>
+      <li class="nav-item" onclick="switchView('code-sandbox', this)">
+        <i class="fa-solid fa-code"></i> Code Lab
+      </li>
+      <li class="nav-item" onclick="switchView('skills', this)">
+        <i class="fa-solid fa-layer-group"></i> Skill Manager
+      </li>
+    </ul>
+    <div class="sidebar-footer">
+      <p>Emerald Glass v1.0</p>
+      <p style="font-size: 0.7rem; margin-top: 4px; opacity: 0.6;">Powered by Termux & AI</p>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    
+    <!-- VIEW: Prompt Builder -->
+    <div id="view-prompt-builder">
+      <header class="header">
+        <div>
+          <h1 class="page-title">Prompt Builder</h1>
+          <p class="page-subtitle">สร้างคำสั่ง AI ระดับมืออาชีพสำหรับ Termux และโปรเจ็กต์ของคุณ</p>
+        </div>
+        <button class="btn btn-secondary" onclick="resetForm()">
+          <i class="fa-solid fa-rotate-left"></i> Reset
+        </button>
+      </header>
+
+      <div class="grid-2">
+        <!-- Configuration Column -->
+        <div class="left-col">
+          <div class="glass-panel">
+            <h3 style="margin-bottom:20px; font-weight:600;">1. การตั้งค่า (Configuration)</h3>
+            
+            <div class="form-group">
+              <label class="form-label">เลือกโมเดลหลัก (Target Model)</label>
+              <select id="modelSelect" class="select-glass" onchange="updatePreview()">
+                <option value="claude">Claude 3.5 Sonnet (Best for Coding)</option>
+                <option value="gpt">GPT-4o (Best for Logic/Reasoning)</option>
+                <option value="gemini">Gemini Pro (Best for Large Context)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">ประเภทโปรเจ็กต์ (Context)</label>
+              <select id="contextType" class="select-glass" onchange="updatePreview()">
+                <option value="termux">Termux / Linux Environment</option>
+                <option value="webdev">Web Development (HTML/CSS/JS)</option>
+                <option value="python">Python / Data Analysis</option>
+                <option value="general">General Assistant</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">บทบาท AI (Role)</label>
+              <input type="text" id="roleInput" class="input-glass" placeholder="เช่น Senior Backend Developer" value="Senior Termux & Linux Expert" oninput="updatePreview()">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">งานที่ต้องการ (Task Description)</label>
+              <textarea id="taskInput" class="textarea-glass" placeholder="อธิบายสิ่งที่ต้องการให้ AI ทำ..." oninput="updatePreview()">สร้างคำสั่งติดตั้งสภาพแวดล้อมพัฒนาซอฟต์แวร์บน Termux สำหรับ Python และ Node.js พร้อมสคริปต์จัดการโปรเจ็กต์</textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Constraints / Style (ข้อจำกัด/รูปแบบ)</label>
+              <input type="text" id="styleInput" class="input-glass" value="Use clear comments, optimize for mobile resources, provide step-by-step guide." oninput="updatePreview()">
+            </div>
+          </div>
+        </div>
+
+        <!-- Result Column -->
+        <div class="right-col">
+          <!-- System Prompt -->
+          <div class="glass-panel" style="margin-bottom: 24px;">
+            <div class="output-header">
+              <span class="output-title">System Prompt</span>
+              <div style="display:flex; gap:8px;">
+                <button class="btn btn-sm btn-secondary" onclick="exportFile('system')"><i class="fa-solid fa-download"></i></button>
+                <button class="btn btn-sm btn-primary" onclick="copyToClipboard('system')"><i class="fa-regular fa-copy"></i> Copy</button>
+              </div>
+            </div>
+            <div class="prompt-preview" id="systemPreview"></div>
+          </div>
+
+          <!-- User Prompt -->
+          <div class="glass-panel" style="margin-bottom: 24px;">
+            <div class="output-header">
+              <span class="output-title">User Prompt</span>
+              <div style="display:flex; gap:8px;">
+                <button class="btn btn-sm btn-secondary" onclick="exportFile('user')"><i class="fa-solid fa-download"></i></button>
+                <button class="btn btn-sm btn-primary" onclick="copyToClipboard('user')"><i class="fa-regular fa-copy"></i> Copy</button>
+              </div>
+            </div>
+            <div class="prompt-preview" id="userPreview"></div>
+            <!-- Model Compatibility Tag -->
+            <div style="margin-top:12px; display:flex; justify-content:flex-end;">
+               <span id="compatibilityTag" class="tag tag-claude"><i class="fa-solid fa-check-circle"></i> Best Match: Claude 3.5</span>
+            </div>
+          </div>
+
+          <!-- MTC Helper -->
+          <div class="glass-panel follow-up-section">
+            <div class="output-header">
+              <span class="output-title"><i class="fa-solid fa-bolt" style="color:var(--yellow)"></i> Iterative Refinement (MTC Helper)</span>
+            </div>
+            <p style="font-size:0.85rem; color:var(--text-dim);">Follow-up Prompts เพื่อขยายผลลัพธ์:</p>
+            <div class="follow-up-grid" id="followUpContainer">
+              <!-- Chips injected by JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW: Code Sandbox -->
+    <div id="view-code-sandbox" style="display: none;">
+      <header class="header">
+        <div>
+          <h1 class="page-title">Code Lab</h1>
+          <p class="page-subtitle">ทดสอบโค้ดและจำลองผลลัพธ์ (Simulated Terminal)</p>
+        </div>
+        <button class="btn btn-primary" onclick="runSimulation()">
+          <i class="fa-solid fa-play"></i> Run Code
+        </button>
+      </header>
+
+      <div class="editor-container">
+        <textarea id="codeEditor" class="code-area" spellcheck="false" placeholder="// Paste or type your code here...
+# Example Termux Script
+pkg update && pkg upgrade -y
+pkg install python nodejs -y
+echo 'Environment Ready!'"></textarea>
+        
+        <div class="console-output" id="consoleOutput">
+          > Waiting for input...<br>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW: Skills -->
+    <div id="view-skills" style="display: none;">
+      <header class="header">
+        <div>
+          <h1 class="page-title">Skill Manager</h1>
+          <p class="page-subtitle">จัดการเทมเพลตและเซ็ตสกิลของทีม</p>
+        </div>
+        <button class="btn btn-primary"><i class="fa-solid fa-plus"></i> New Skill Set</button>
+      </header>
+
+      <div class="grid-3">
+        <div class="glass-panel">
+          <div style="height:40px; width:40px; background:var(--pink-dim); border-radius:8px; display:flex; align-items:center; justify-content:center; margin-bottom:16px;">
+            <i class="fa-brands fa-python" style="color:var(--pink); font-size:1.2rem;"></i>
+          </div>
+          <h3 style="margin-bottom:8px;">Python Automation</h3>
+          <p style="color:var(--text-dim); font-size:0.9rem; margin-bottom:16px;">เซ็ตพรอมต์สำหรับเขียนสคริปต์ Python ทำงานอัตโนมัติบน Termux</p>
+          <button class="btn btn-sm btn-secondary btn-block">Load Template</button>
+        </div>
+        
+        <div class="glass-panel">
+          <div style="height:40px; width:40px; background:var(--emerald-dim); border-radius:8px; display:flex; align-items:center; justify-content:center; margin-bottom:16px;">
+            <i class="fa-brands fa-linux" style="color:var(--emerald); font-size:1.2rem;"></i>
+          </div>
+          <h3 style="margin-bottom:8px;">Termux Setup</h3>
+          <p style="color:var(--text-dim); font-size:0.9rem; margin-bottom:16px;">คำสั่งพื้นฐานและการตั้งค่าสภาพแวดล้อม Linux บนมือถือ</p>
+          <button class="btn btn-sm btn-secondary btn-block">Load Template</button>
+        </div>
+
+        <div class="glass-panel">
+          <div style="height:40px; width:40px; background:var(--orange-dim); border-radius:8px; display:flex; align-items:center; justify-content:center; margin-bottom:16px;">
+            <i class="fa-solid fa-globe" style="color:var(--orange); font-size:1.2rem;"></i>
+          </div>
+          <h3 style="margin-bottom:8px;">Web Scraper</h3>
+          <p style="color:var(--text-dim); font-size:0.9rem; margin-bottom:16px;">สกิลสำหรับดึงข้อมูลเว็บและจัดการ HTML/CSS selectors</p>
+          <button class="btn btn-sm btn-secondary btn-block">Load Template</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script>
+    // === State Management ===
+    const state = {
+      model: 'claude',
+      context: 'termux',
+      role: '',
+      task: '',
+      style: ''
+    };
+
+    const followUpData = {
+      termux: [
+        "Create a startup script for this",
+        "Add error handling for missing packages",
+        "Explain each command in detail"
+      ],
+      webdev: [
+        "Refactor this to use React components",
+        "Add responsive CSS media queries",
+        "Generate unit tests with Jest"
+      ],
+      python: [
+        "Optimize this script for memory usage",
+        "Add type hinting",
+        "Create a requirements.txt file"
+      ]
+    };
+
+    // === Initialization ===
+    document.addEventListener('DOMContentLoaded', () => {
+      updatePreview();
+    });
+
+    // === Navigation Logic ===
+    function switchView(viewId, navElement) {
+      // Hide all views
+      ['view-prompt-builder', 'view-code-sandbox', 'view-skills'].forEach(id => {
+        document.getElementById(id).style.display = 'none';
+      });
+      // Show selected view
+      document.getElementById('view-' + viewId).style.display = 'block';
+
+      // Update Sidebar Active State
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      if(navElement) navElement.classList.add('active');
+    }
+
+    // === Prompt Builder Logic ===
+    function updatePreview() {
+      // Get inputs
+      state.model = document.getElementById('modelSelect').value;
+      state.context = document.getElementById('contextType').value;
+      state.role = document.getElementById('roleInput').value;
+      state.task = document.getElementById('taskInput').value;
+      state.style = document.getElementById('styleInput').value;
+
+      // Generate System Prompt
+      const systemText = `You are a ${state.role}.
+Context: You are operating within a ${state.context === 'termux' ? 'Termux (Android Linux) environment' : state.context + ' environment'}.
+
+Instructions:
+ ${state.style}
+
+Always output clean, optimized code. Use markdown for formatting.`;
+
+      // Generate User Prompt
+      const userText = `Project Request:
+ ${state.task}
+
+Please provide the solution, including any necessary installation commands and explanation.`;
+
+      // Update DOM
+      document.getElementById('systemPreview').textContent = systemText;
+      document.getElementById('userPreview').textContent = userText;
+
+      // Update Tags
+      updateTags();
+      
+      // Update Follow-ups
+      updateFollowUps();
+    }
+
+    function updateTags() {
+      const tagEl = document.getElementById('compatibilityTag');
+      tagEl.className = 'tag'; // Reset
+      
+      if(state.model === 'claude') {
+        tagEl.classList.add('tag-claude');
+        tagEl.innerHTML = '<i class="fa-solid fa-check-circle"></i> Best Match: Claude 3.5 Sonnet';
+      } else if (state.model === 'gpt') {
+        tagEl.classList.add('tag-gpt');
+        tagEl.innerHTML = '<i class="fa-solid fa-brain"></i> Best Match: GPT-4o';
+      } else {
+        tagEl.classList.add('tag-gemini');
+        tagEl.innerHTML = '<i class="fa-solid fa-database"></i> Best Match: Gemini 1.5 Pro';
+      }
+    }
+
+    function updateFollowUps() {
+      const container = document.getElementById('followUpContainer');
+      container.innerHTML = '';
+      
+      const suggestions = followUpData[state.context] || [
+        "Analyze the complexity of this solution",
+        "Provide alternative implementation"
+      ];
+
+      suggestions.forEach(text => {
+        const chip = document.createElement('div');
+        chip.className = 'chip';
+        chip.innerHTML = `<i class="fa-solid fa-plus"></i> ${text}`;
+        chip.onclick = () => appendToTask(text);
+        container.appendChild(chip);
+      });
+    }
+
+    function appendToTask(text) {
+      const taskInput = document.getElementById('taskInput');
+      taskInput.value += `\n\nAdditional Request: ${text}`;
+      updatePreview();
+      showToast('เพิ่ม Follow-up Prompt แล้ว', 'success');
+    }
+
+    function resetForm() {
+      document.getElementById('roleInput').value = "Senior Termux & Linux Expert";
+      document.getElementById('taskInput').value = "";
+      document.getElementById('styleInput').value = "Use clear comments, optimize for mobile resources.";
+      updatePreview();
+      showToast('รีเซ็ตฟอร์มเรียบร้อย', 'info');
+    }
+
+    // === Clipboard & Export ===
+    async function copyToClipboard(type) {
+      const text = type === 'system' 
+        ? document.getElementById('systemPreview').textContent 
+        : document.getElementById('userPreview').textContent;
+      
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast(`คัดลอก ${type.toUpperCase()} Prompt สำเร็จ!`, 'success');
+      } catch (err) {
+        showToast('คัดลอกไม่สำเร็จ', 'error');
+      }
+    }
+
+    function exportFile(type) {
+      const text = type === 'system' 
+        ? document.getElementById('systemPreview').textContent 
+        : document.getElementById('userPreview').textContent;
+      
+      const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `skillforge_${type}_prompt.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast('ดาวน์โหลดไฟล์เรียบร้อย', 'success');
+    }
+
+    // === Code Sandbox Simulation ===
+    function runSimulation() {
+      const code = document.getElementById('codeEditor').value;
+      const consoleEl = document.getElementById('consoleOutput');
+      
+      consoleEl.innerHTML = '> Starting simulation...<br>';
+      
+      // Simulate processing delay
+      setTimeout(() => {
+        consoleEl.innerHTML += `> Reading input (${code.length} chars)...<br>`;
+      }, 500);
+
+      setTimeout(() => {
+        consoleEl.innerHTML += `> [INFO] Environment: ${state.context === 'termux' ? 'Termux/Android' : 'Standard'}<br>`;
+        if(code.includes('pkg') || code.includes('apt')) {
+           consoleEl.innerHTML += `> [SYSTEM] Package manager detected.<br>`;
+        }
+      }, 1000);
+
+      setTimeout(() => {
+        consoleEl.innerHTML += `<span style="color:#0f0">> SUCCESS: Code simulation executed without errors.</span><br>`;
+        consoleEl.scrollTop = consoleEl.scrollHeight;
+        showToast('รันโค้ดจำลองสำเร็จ', 'success');
+      }, 2000);
+    }
+
+    // === Toast System ===
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      
+      let icon = 'fa-info-circle';
+      let color = 'var(--cyan)';
+      if(type === 'success') { icon = 'fa-check-circle'; color = 'var(--emerald)'; }
+      if(type === 'error') { icon = 'fa-exclamation-triangle'; color = 'var(--pink)'; }
+
+      toast.style.borderLeftColor = color;
+      toast.innerHTML = `<i class="fa-solid ${icon}" style="color:${color}"></i> <span>${message}</span>`;
+      
+      container.appendChild(toast);
+
+      // Remove after 3 seconds
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+  </script>
+</body>
+</html>
