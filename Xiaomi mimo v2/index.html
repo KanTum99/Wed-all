@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MiMo-v2-pro — Agent Teams System Monitor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                        display: ['Space Grotesk', 'sans-serif'],
+                    },
+                    colors: {
+                        mimo: {
+                            50: '#eef5ff',
+                            100: '#d9e8ff',
+                            200: '#bcd8ff',
+                            300: '#8ec1ff',
+                            400: '#589fff',
+                            500: '#3378ff',
+                            600: '#1b57f5',
+                            700: '#1443e1',
+                            800: '#1736b6',
+                            900: '#19338f',
+                            950: '#142157',
+                        },
+                        chrome: {
+                            50: '#f5f7fa',
+                            100: '#eaeef4',
+                            200: '#d0dae6',
+                            300: '#a7bbd0',
+                            400: '#7898b6',
+                            500: '#577b9d',
+                            600: '#446384',
+                            700: '#38506b',
+                            800: '#32455a',
+                            900: '#2d3c4e',
+                            950: '#1e2733',
+                        },
+                        neon: {
+                            cyan: '#00f5ff',
+                            blue: '#3b82f6',
+                            purple: '#a855f7',
+                            pink: '#ec4899',
+                            green: '#22c55e',
+                            amber: '#f59e0b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --reflect-opacity: 0.06;
+            --chrome-shine: linear-gradient(135deg, 
+                rgba(255,255,255,0.0) 0%, 
+                rgba(255,255,255,0.08) 25%, 
+                rgba(255,255,255,0.0) 50%, 
+                rgba(255,255,255,0.04) 75%, 
+                rgba(255,255,255,0.0) 100%);
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: #07090f;
+            color: #c8d6e5;
+            overflow-x: hidden;
+        }
+
+        /* ═══════════════ REFLECTIVE SYSTEM BACKGROUND ═══════════════ */
+        .reflect-bg {
+            position: relative;
+            min-height: 100vh;
+        }
+
+        .reflect-bg::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 50% -20%, rgba(51,120,255,0.12) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 40% at 80% 80%, rgba(0,245,255,0.06) 0%, transparent 50%),
+                radial-gradient(ellipse 40% 30% at 10% 60%, rgba(168,85,247,0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .reflect-bg::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: 
+                repeating-linear-gradient(
+                    0deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(255,255,255,0.008) 2px,
+                    rgba(255,255,255,0.008) 4px
+                );
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Chrome Reflective Surface */
+        .chrome-surface {
+            position: relative;
+            background: linear-gradient(180deg, 
+                rgba(255,255,255,0.03) 0%, 
+                rgba(255,255,255,0.01) 100%);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .chrome-surface::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--chrome-shine);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .chrome-surface::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 200%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                rgba(255,255,255,0.03) 45%, 
+                rgba(255,255,255,0.08) 50%, 
+                rgba(255,255,255,0.03) 55%, 
+                transparent 100%);
+            animation: chrome-sweep 8s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        @keyframes chrome-sweep {
+            0%, 100% { transform: translateX(-30%); }
+            50% { transform: translateX(30%); }
+        }
+
+        /* Reflective Floor Effect */
+        .reflect-floor {
+            position: relative;
+        }
+
+        .reflect-floor::after {
+            content: '';
+            position: absolute;
+            bottom: -80px;
+            left: 5%;
+            right: 5%;
+            height: 80px;
+            background: linear-gradient(180deg, 
+                rgba(255,255,255,0.04) 0%, 
+                transparent 100%);
+            filter: blur(10px);
+            transform: scaleY(-0.3) perspective(400px) rotateX(30deg);
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        /* Gradient Text */
+        .gradient-text {
+            background: linear-gradient(135deg, 
+                #3378ff 0%, #00f5ff 30%, #a855f7 60%, #3378ff 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-flow 6s ease infinite;
+        }
+
+        @keyframes gradient-flow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Glass Panel */
+        .glass-panel {
+            background: rgba(255,255,255,0.02);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                rgba(255,255,255,0.1) 30%, 
+                rgba(255,255,255,0.2) 50%, 
+                rgba(255,255,255,0.1) 70%, 
+                transparent 100%);
+        }
+
+        /* Orbit System */
+        .orbit-ring {
+            position: absolute;
+            border: 1px solid rgba(255,255,255,0.04);
+            border-radius: 50%;
+            animation: orbit-spin 30s linear infinite;
+        }
+
+        .orbit-ring::before {
+            content: '';
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: #00f5ff;
+            border-radius: 50%;
+            top: -3px;
+            left: 50%;
+            margin-left: -3px;
+            box-shadow: 0 0 10px #00f5ff, 0 0 20px rgba(0,245,255,0.5);
+        }
+
+        .orbit-ring-2 {
+            animation-direction: reverse;
+            animation-duration: 20s;
+        }
+
+        .orbit-ring-2::before {
+            background: #a855f7;
+            box-shadow: 0 0 10px #a855f7, 0 0 20px rgba(168,85,247,0.5);
+        }
+
+        .orbit-ring-3 {
+            animation-duration: 25s;
+        }
+
+        .orbit-ring-3::before {
+            background: #22c55e;
+            box-shadow: 0 0 10px #22c55e, 0 0 20px rgba(34,197,94,0.5);
+        }
+
+        @keyframes orbit-spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Floating Particles */
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: rgba(0,245,255,0.4);
+            border-radius: 50%;
+            animation: float-particle 15s linear infinite;
+        }
+
+        @keyframes float-particle {
+            0% { transform: translateY(100vh) translateX(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100vh) translateX(50px); opacity: 0; }
+        }
+
+        /* Status Glow */
+        .status-glow {
+            box-shadow: 0 0 6px currentColor, 0 0 12px currentColor;
+            animation: glow-pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes glow-pulse {
+            0%, 100% { box-shadow: 0 0 4px currentColor, 0 0 8px currentColor; }
+            50% { box-shadow: 0 0 8px currentColor, 0 0 16px currentColor; }
+        }
+
+        /* Card Hover */
+        .card-reflect {
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card-reflect:hover {
+            transform: translateY(-6px);
+            border-color: rgba(0,245,255,0.2);
+            box-shadow: 
+                0 20px 60px rgba(0,0,0,0.3),
+                0 0 40px rgba(0,245,255,0.05),
+                inset 0 1px 0 rgba(255,255,255,0.06);
+        }
+
+        /* Terminal Log */
+        .terminal-bg {
+            background: linear-gradient(180deg, 
+                #0a0d14 0%, #0e1118 50%, #0a0d14 100%);
+            border: 1px solid rgba(0,245,255,0.1);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .log-line {
+            animation: log-fade 0.5s ease-out forwards;
+        }
+
+        @keyframes log-fade {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .cursor-blink::after {
+            content: '▊';
+            color: #00f5ff;
+            animation: blink-c 1s step-end infinite;
+            margin-left: 2px;
+        }
+
+        @keyframes blink-c {
+            50% { opacity: 0; }
+        }
+
+        /* Metric Bar */
+        .metric-bar {
+            height: 3px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .metric-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Tab */
+        .tab-btn {
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, 
+                rgba(51,120,255,0.15), rgba(0,245,255,0.1));
+            border-color: rgba(0,245,255,0.3);
+            color: #fff;
+        }
+
+        /* Scroll Reveal */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .reveal.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Code Block */
+        .code-glow {
+            background: linear-gradient(180deg, #0c0f16, #111520);
+            border: 1px solid rgba(0,245,255,0.08);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .code-glow::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, 
+                transparent, rgba(0,245,255,0.3), transparent);
+        }
+
+        /* Noise Overlay */
+        .noise {
+            position: fixed;
+            inset: 0;
+            opacity: 0.015;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(0,245,255,0.2); border-radius: 4px; }
+
+        /* Smooth */
+        html { scroll-behavior: smooth; }
+    </style>
+</head>
+
+<body class="reflect-bg">
+    <!-- Noise Texture -->
+    <div class="noise"></div>
+
+    <!-- Floating Particles -->
+    <div class="fixed inset-0 pointer-events-none z-0" id="particles"></div>
+
+    <!-- ═══════════ NAVIGATION ═══════════ -->
+    <nav class="fixed top-0 w-full z-50">
+        <div class="glass-panel mx-4 mt-4 px-6 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-mimo-500 to-neon-cyan flex items-center justify-center shadow-lg shadow-mimo-500/20">
+                    <i data-lucide="cpu" class="w-5 h-5 text-white"></i>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="font-display font-bold text-lg text-white tracking-tight">MiMo</span>
+                    <span class="text-[10px] font-mono text-neon-cyan bg-mimo-950/60 px-2 py-0.5 rounded-full border border-mimo-800/50">v2-pro</span>
+                </div>
+            </div>
+
+            <div class="hidden md:flex items-center gap-6 text-sm">
+                <a href="#system" class="text-chrome-400 hover:text-neon-cyan transition-colors duration-300">System</a>
+                <a href="#agents" class="text-chrome-400 hover:text-neon-cyan transition-colors duration-300">Agents</a>
+                <a href="#monitor" class="text-chrome-400 hover:text-neon-cyan transition-colors duration-300">Monitor</a>
+                <a href="#deploy" class="text-chrome-400 hover:text-neon-cyan transition-colors duration-300">Deploy</a>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 status-glow"></span>
+                    <span class="text-[11px] font-mono text-emerald-400">ALL SYSTEMS GO</span>
+                </div>
+                <button class="px-4 py-2 rounded-lg bg-gradient-to-r from-mimo-600 to-neon-cyan/80 text-white text-sm font-medium hover:shadow-lg hover:shadow-mimo-500/20 transition-all duration-300">
+                    Deploy
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ═══════════ HERO ═══════════ -->
+    <section class="relative pt-36 pb-24 px-6" id="system">
+        <div class="max-w-7xl mx-auto relative z-10">
+            <div class="grid lg:grid-cols-2 gap-16 items-center">
+                <!-- Left -->
+                <div class="space-y-8">
+                    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-mimo-800/40 bg-mimo-950/40 text-mimo-300 text-xs font-mono">
+                        <span class="w-1.5 h-1.5 rounded-full bg-neon-cyan animate-pulse"></span>
+                        Xiaomi MiMo-v2-pro — 1T Parameters · 1M Context
+                    </div>
+
+                    <h1 class="font-display text-5xl md:text-7xl font-bold leading-[1.1]">
+                        <span class="text-white">Multi-Agent</span><br>
+                        <span class="gradient-text">System Monitor</span><br>
+                        <span class="text-chrome-500 text-3xl md:text-4xl font-light">Intelligent Orchestration</span>
+                    </h1>
+
+                    <p class="text-chrome-400 text-lg max-w-lg leading-relaxed">
+                        ระบบ Monitor แบบ Reflective Surface สำหรับ Agent Teams ที่มี stable role identity, autonomous decision-making และ real-time collaboration
+                    </p>
+
+                    <div class="flex flex-wrap gap-3">
+                        <button class="group px-7 py-3.5 rounded-xl bg-gradient-to-r from-mimo-600 to-mimo-500 text-white font-semibold hover:shadow-2xl hover:shadow-mimo-500/25 transition-all duration-300 flex items-center gap-2">
+                            <i data-lucide="zap" class="w-4 h-4 group-hover:scale-110 transition-transform"></i>
+                            Quick Start
+                        </button>
+                        <button class="px-7 py-3.5 rounded-xl border border-white/10 text-white font-semibold hover:bg-white/5 hover:border-white/20 transition-all duration-300 flex items-center gap-2">
+                            <i data-lucide="file-code-2" class="w-4 h-4"></i>
+                            View Docs
+                        </button>
+                    </div>
+
+                    <!-- Stats Row -->
+                    <div class="flex items-center gap-8 pt-4">
+                        <div>
+                            <div class="text-2xl font-bold text-white font-display">12</div>
+                            <div class="text-xs text-chrome-500">Active Agents</div>
+                        </div>
+                        <div class="w-px h-10 bg-white/10"></div>
+                        <div>
+                            <div class="text-2xl font-bold text-white font-display">99.97%</div>
+                            <div class="text-xs text-chrome-500">Uptime</div>
+                        </div>
+                        <div class="w-px h-10 bg-white/10"></div>
+                        <div>
+                            <div class="text-2xl font-bold text-white font-display">47ms</div>
+                            <div class="text-xs text-chrome-500">Avg Latency</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right — Orbital Visualization -->
+                <div class="relative flex items-center justify-center h-[400px]">
+                    <!-- Glow Center -->
+                    <div class="absolute w-40 h-40 rounded-full bg-mimo-500/10 blur-[60px]"></div>
+                    <div class="absolute w-20 h-20 rounded-full bg-neon-cyan/20 blur-[30px]"></div>
+
+                    <!-- Center Hub -->
+                    <div class="relative z-10 w-20 h-20 rounded-2xl bg-gradient-to-br from-chrome-900 to-chrome-950 border border-white/10 flex items-center justify-center shadow-2xl shadow-mimo-500/10">
+                        <i data-lucide="brain" class="w-8 h-8 text-neon-cyan"></i>
+                    </div>
+
+                    <!-- Orbit Rings -->
+                    <div class="orbit-ring absolute w-[200px] h-[200px] -translate-x-1/2 -translate-y-1/2" style="top:50%;left:50%"></div>
+                    <div class="orbit-ring orbit-ring-2 absolute w-[300px] h-[300px] -translate-x-1/2 -translate-y-1/2" style="top:50%;left:50%"></div>
+                    <div class="orbit-ring orbit-ring-3 absolute w-[380px] h-[380px] -translate-x-1/2 -translate-y-1/2" style="top:50%;left:50%"></div>
+
+                    <!-- Agent Nodes on Ring 1 -->
+                    <div class="absolute z-10" style="top:15%;left:50%;transform:translate(-50%,-50%)">
+                        <div class="w-10 h-10 rounded-lg bg-chrome-900 border border-neon-cyan/30 flex items-center justify-center shadow-lg shadow-neon-cyan/10">
+                            <i data-lucide="code-2" class="w-5 h-5 text-neon-cyan"></i>
+                        </div>
+                    </div>
+                    <div class="absolute z-10" style="top:50%;left:85%;transform:translate(-50%,-50%)">
+                        <div class="w-10 h-10 rounded-lg bg-chrome-900 border border-neon-purple/30 flex items-center justify-center shadow-lg shadow-neon-purple/10">
+                            <i data-lucide="shield" class="w-5 h-5 text-neon-purple"></i>
+                        </div>
+                    </div>
+                    <div class="absolute z-10" style="top:85%;left:50%;transform:translate(-50%,-50%)">
+                        <div class="w-10 h-10 rounded-lg bg-chrome-900 border border-neon-green/30 flex items-center justify-center shadow-lg shadow-neon-green/10">
+                            <i data-lucide="database" class="w-5 h-5 text-neon-green"></i>
+                        </div>
+                    </div>
+                    <div class="absolute z-10" style="top:50%;left:15%;transform:translate(-50%,-50%)">
+                        <div class="w-10 h-10 rounded-lg bg-chrome-900 border border-neon-amber/30 flex items-center justify-center shadow-lg shadow-neon-amber/10">
+                            <i data-lucide="gauge" class="w-5 h-5 text-neon-amber"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════ LIVE MONITOR DASHBOARD ═══════════ -->
+    <section class="py-16 px-6" id="monitor">
+        <div class="max-w-7xl mx-auto">
+            <div class="chrome-surface p-6 md:p-8">
+                <!-- Header -->
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-neon-cyan/10 border border-neon-cyan/20 flex items-center justify-center">
+                            <i data-lucide="activity" class="w-4 h-4 text-neon-cyan"></i>
+                        </div>
+                        <div>
+                            <span class="text-sm font-semibold text-white">Live System Monitor</span>
+                            <span class="ml-2 text-[10px] font-mono text-chrome-500">MiMo-v2-pro Runtime</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span class="text-[10px] font-mono text-chrome-500" id="live-time">REALTIME</span>
+                    </div>
+                </div>
+
+                <!-- Metrics Grid -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="glass-panel p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[10px] text-chrome-500 font-mono uppercase tracking-wider">Agents</span>
+                            <i data-lucide="bot" class="w-3.5 h-3.5 text-neon-cyan"></i>
+                        </div>
+                        <div class="text-2xl font-bold text-white font-display" id="m-agents">12</div>
+                        <div class="metric-bar mt-2">
+                            <div class="metric-fill bg-gradient-to-r from-neon-cyan to-mimo-500" style="width:75%"></div>
+                        </div>
+                        <div class="text-[10px] text-emerald-400 mt-1.5 font-mono">+3 spawned</div>
+                    </div>
+
+                    <div class="glass-panel p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[10px] text-chrome-500 font-mono uppercase tracking-wider">Tasks</span>
+                            <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-neon-green"></i>
+                        </div>
+                        <div class="text-2xl font-bold text-white font-display" id="m-tasks">2,847</div>
+                        <div class="metric-bar mt-2">
+                            <div class="metric-fill bg-gradient-to-r from-neon-green to-emerald-400" style="width:92%"></div>
+                        </div>
+                        <div class="text-[10px] text-emerald-400 mt-1.5 font-mono">98.4% success</div>
+                    </div>
+
+                    <div class="glass-panel p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[10px] text-chrome-500 font-mono uppercase tracking-wider">Latency</span>
+                            <i data-lucide="timer" class="w-3.5 h-3.5 text-neon-amber"></i>
+                        </div>
+                        <div class="text-2xl font-bold text-white font-display" id="m-latency">47<span class="text-sm text-chrome-500">ms</span></div>
+                        <div class="metric-bar mt-2">
+                            <div class="metric-fill bg-gradient-to-r from-neon-amber to-yellow-400" style="width:23%"></div>
+                        </div>
+                        <div class="text-[10px] text-emerald-400 mt-1.5 font-mono">↓ 18% faster</div>
+                    </div>
+
+                    <div class="glass-panel p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[10px] text-chrome-500 font-mono uppercase tracking-wider">Load</span>
+                            <i data-lucide="server" class="w-3.5 h-3.5 text-neon-pink"></i>
+                        </div>
+                        <div class="text-2xl font-bold text-white font-display" id="m-load">28<span class="text-sm text-chrome-500">%</span></div>
+                        <div class="metric-bar mt-2">
+                            <div class="metric-fill bg-gradient-to-r from-neon-pink to-neon-purple" style="width:28%"></div>
+                        </div>
+                        <div class="text-[10px] text-chrome-500 mt-1.5 font-mono">nominal</div>
+                    </div>
+                </div>
+
+                <!-- Terminal Log Stream -->
+                <div class="terminal-bg rounded-lg p-4 h-52 overflow-hidden relative">
+                    <div class="absolute top-3 left-4 flex items-center gap-2">
+                        <div class="w-2.5 h-2.5 rounded-full bg-red-500/60"></div>
+                        <div class="w-2.5 h-2.5 rounded-full bg-yellow-500/60"></div>
+                        <div class="w-2.5 h-2.5 rounded-full bg-green-500/60"></div>
+                        <span class="ml-2 text-[10px] text-chrome-600 font-mono">mimo-agent-runtime v2.6.0</span>
+                    </div>
+                    <div class="mt-6 text-xs space-y-1.5 font-mono overflow-hidden" id="log-container">
+                        <div class="text-chrome-600 log-line">[20:42:01] <span class="text-emerald-400">BOOT</span> MiMo Agent Orchestrator v2.6 initialized</div>
+                        <div class="text-chrome-600 log-line">[20:42:01] <span class="text-neon-cyan">CORE</span> 12 agent identities registered — all stable</div>
+                        <div class="text-chrome-600 log-line">[20:42:02] <span class="text-neon-blue">AGENT</span> CodeArchitect-α → task #4821: REST API schema</div>
+                        <div class="text-chrome-600 log-line">[20:42:03] <span class="text-neon-purple">AGENT</span> DataGuardian-γ → validating input pipeline</div>
+                        <div class="text-chrome-600 log-line">[20:42:04] <span class="text-neon-green">SYNC</span> Cross-agent consensus: module boundaries OK</div>
+                        <div class="text-chrome-600 log-line">[20:42:05] <span class="text-neon-amber">AGENT</span> PerfEngineer-β → query optimizer active</div>
+                        <div class="text-chrome-600 log-line">[20:42:06] <span class="text-neon-cyan">CORE</span> Task #4820 completed — confidence 98.7%</div>
+                        <div class="text-chrome-600 log-line cursor-blink">[20:42:07] <span class="text-emerald-400">AUTO</span> Scaling decision: spawning QATester-δ</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════ AGENT ROLES ═══════════ -->
+    <section class="py-20 px-6" id="agents">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16 reveal">
+                <span class="text-neon-cyan font-mono text-xs tracking-widest uppercase">Agent Identities</span>
+                <h2 class="font-display text-4xl md:text-5xl font-bold mt-4 text-white">Specialized <span class="gradient-text">Roles</span></h2>
+                <p class="text-chrome-500 mt-4 max-w-xl mx-auto">แต่ละ Agent มี Stable Role Identity ที่มั่นคง พร้อม Autonomous Decision-Making สำหรับงานวิศวกรรมที่ซับซ้อน</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
+                <!-- Card 1 -->
+                <div class="chrome-surface card-reflect p-6 reveal">
+                    <div class="w-11 h-11 rounded-lg bg-neon-cyan/10 border border-neon-cyan/20 flex items-center justify-center mb-5 relative z-10">
+                        <i data-lucide="code-2" class="w-5 h-5 text-neon-cyan"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2 relative z-10">CodeArchitect</h3>
+                    <p class="text-sm text-chrome-400 leading-relaxed mb-4 relative z-10">ออกแบบ System Architecture, กำหนด API Schema และ Coding Standards</p>
+                    <div class="flex flex-wrap gap-1.5 relative z-10">
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-mimo-950/50 text-mimo-300 border border-mimo-800/30">Design</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-mimo-950/50 text-mimo-300 border border-mimo-800/30">Review</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-mimo-950/50 text-mimo-300 border border-mimo-800/30">Refactor</span>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-white/5 flex items-center justify-between relative z-10">
+                        <span class="text-[10px] font-mono text-chrome-600">3 instances</span>
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="chrome-surface card-reflect p-6 reveal" style="transition-delay:0.1s">
+                    <div class="w-11 h-11 rounded-lg bg-neon-purple/10 border border-neon-purple/20 flex items-center justify-center mb-5 relative z-10">
+                        <i data-lucide="shield-check" class="w-5 h-5 text-neon-purple"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2 relative z-10">SecurityAuditor</h3>
+                    <p class="text-sm text-chrome-400 leading-relaxed mb-4 relative z-10">สแกนช่องโหว่, ตรวจ Compliance และ Audit Access Patterns</p>
+                    <div class="flex flex-wrap gap-1.5 relative z-10">
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-950/50 text-purple-300 border border-purple-800/30">Scan</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-950/50 text-purple-300 border border-purple-800/30">Audit</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-950/50 text-purple-300 border border-purple-800/30">Enforce</span>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-white/5 flex items-center justify-between relative z-10">
+                        <span class="text-[10px] font-mono text-chrome-600">2 instances</span>
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="chrome-surface card-reflect p-6 reveal" style="transition-delay:0.2s">
+                    <div class="w-11 h-11 rounded-lg bg-neon-green/10 border border-neon-green/20 flex items-center justify-center mb-5 relative z-10">
+                        <i data-lucide="database" class="w-5 h-5 text-neon-green"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2 relative z-10">DataGuardian</h3>
+                    <p class="text-sm text-chrome-400 leading-relaxed mb-4 relative z-10">จัดการ Data Pipeline, รักษา Integrity และ Optimize Storage</p>
+                    <div class="flex flex-wrap gap-1.5 relative z-10">
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950/50 text-emerald-300 border border-emerald-800/30">Pipeline</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950/50 text-emerald-300 border border-emerald-800/30">Integrity</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950/50 text-emerald-300 border border-emerald-800/30">Cache</span>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-white/5 flex items-center justify-between relative z-10">
+                        <span class="text-[10px] font-mono text-chrome-600">4 instances</span>
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                    </div>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="chrome-surface card-reflect p-6 reveal" style="transition-delay:0.3s">
+                    <div class="w-11 h-11 rounded-lg bg-neon-amber/10 border border-neon-amber/20 flex items-center justify-center mb-5 relative z-10">
+                        <i data-lucide="gauge" class="w-5 h-5 text-neon-amber"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2 relative z-10">PerfEngineer</h3>
+                    <p class="text-sm text-chrome-400 leading-relaxed mb-4 relative z-10">Profile Bottleneck, Tune Configuration และ确保 SLA Compliance</p>
+                    <div class="flex flex-wrap gap-1.5 relative z-10">
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-950/50 text-amber-300 border border-amber-800/30">Profile</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-950/50 text-amber-300 border border-amber-800/30">Tune</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-950/50 text-amber-300 border border-amber-800/30">SLA</span>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-white/5 flex items-center justify-between relative z-10">
+                        <span class="text-[10px] font-mono text-chrome-600">2 instances</span>
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════ DEPLOY / CODE DEMO ═══════════ -->
+    <section class="py-20 px-6" id="deploy">
+        <div class="max-w-5xl mx-auto">
+            <div class="text-center mb-12 reveal">
+                <span class="text-mimo-400 font-mono text-xs tracking-widest uppercase">Quick Deploy</span>
+                <h2 class="font-display text-4xl font-bold mt-4 text-white">One Command. <span class="gradient-text">Full Stack.</span></h2>
+            </div>
+
+            <div class="chrome-surface reveal overflow-hidden">
+                <!-- Tab Bar -->
+                <div class="flex border-b border-white/5">
+                    <button class="tab-btn active flex-1 px-5 py-3.5 text-sm font-medium text-chrome-400 flex items-center justify-center gap-2" data-tab="npm">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                        Install
+                    </button>
+                    <button class="tab-btn flex-1 px-5 py-3.5 text-sm font-medium text-chrome-400 flex items-center justify-center gap-2" data-tab="config">
+                        <i data-lucide="settings" class="w-4 h-4"></i>
+                        Configure
+                    </button>
+                    <button class="tab-btn flex-1 px-5 py-3.5 text-sm font-medium text-chrome-400 flex items-center justify-center gap-2" data-tab="run">
+                        <i data-lucide="play" class="w-4 h-4"></i>
+                        Run
+                    </button>
+                </div>
+
+                <!-- Tab Content -->
+                <div class="p-6 md:p-8">
+                    <!-- npm -->
+                    <div class="tab-content" id="tab-npm">
+                        <div class="code-glow p-5 font-mono text-sm leading-relaxed">
+                            <div class="text-chrome-600 mb-3">// ติดตั้ง MiMo Agent Teams</div>
+                            <div><span class="text-neon-green">$</span> <span class="text-white">npm install @xiaomi/mimo-agent-teams@2.6</span></div>
+                            <div class="mt-3 text-chrome-600">// หรือ ใช้ yarn</div>
+                            <div><span class="text-neon-green">$</span> <span class="text-white">yarn add @xiaomi/mimo-agent-teams@2.6</span></div>
+                            <div class="mt-3 text-chrome-600">// ตรวจสอบ version</div>
+                            <div><span class="text-neon-green">$</span> <span class="text-white">mimo --version</span></div>
+                            <div class="text-chrome-500 mt-1">→ v2.6.0 (1T params · 1M context)</div>
+                        </div>
+                    </div>
+
+                    <!-- config -->
+                    <div class="tab-content hidden" id="tab-config">
+                        <div class="code-glow p-5 font-mono text-sm leading-relaxed">
+                            <div class="text-chrome-600 mb-3">// mimo.config.ts — กำหนด Agent Team</div>
+                            <div><span class="text-neon-purple">import</span> <span class="text-white">{ AgentTeam, Role }</span> <span class="text-neon-purple">from</span> <span class="text-neon-green">'@xiaomi/mimo-agent-teams'</span>;</div>
+                            <div class="mt-3"><span class="text-neon-purple">export default</span> <span class="text-neon-blue">new</span> <span class="text-neon-amber">AgentTeam</span>({</div>
+                            <div class="pl-4"><span class="text-white">name:</span> <span class="text-neon-green">'mimo-production-team'</span>,</div>
+                            <div class="pl-4"><span class="text-white">engine:</span> <span class="text-neon-green">'mimo-v2-pro'</span>,</div>
+                            <div class="pl-4"><span class="text-white">orchestrator:</span> <span class="text-neon-green">'consensus'</span>,</div>
+                            <div class="pl-4"><span class="text-white">agents:</span> [</div>
+                            <div class="pl-8">{ <span class="text-white">role:</span> Role.<span class="text-neon-cyan">CodeArchitect</span>, <span class="text-white">count:</span> <span class="text-neon-amber">3</span> },</div>
+                            <div class="pl-8">{ <span class="text-white">role:</span> Role.<span class="text-neon-cyan">SecurityAuditor</span>, <span class="text-white">count:</span> <span class="text-neon-amber">2</span> },</div>
+                            <div class="pl-8">{ <span class="text-white">role:</span> Role.<span class="text-neon-cyan">DataGuardian</span>, <span class="text-white">count:</span> <span class="text-neon-amber">4</span> },</div>
+                            <div class="pl-8">{ <span class="text-white">role:</span> Role.<span class="text-neon-cyan">PerfEngineer</span>, <span class="text-white">count:</span> <span class="text-neon-amber">2</span> },</div>
+                            <div class="pl-4">],</div>
+                            <div class="pl-4"><span class="text-white">monitor:</span> {</div>
+                            <div class="pl-8"><span class="text-white">reflective:</span> <span class="text-neon-amber">true</span>,</div>
+                            <div class="pl-8"><span class="text-white">realtime:</span> <span class="text-neon-amber">true</span>,</div>
+                            <div class="pl-8"><span class="text-white">logLevel:</span> <span class="text-neon-green">'verbose'</span>,</div>
+                            <div class="pl-4">}</div>
+                            <div>});</div>
+                        </div>
+                    </div>
+
+                    <!-- run -->
+                    <div class="tab-content hidden" id="tab-run">
+                        <div class="code-glow p-5 font-mono text-sm leading-relaxed">
+                            <div class="text-chrome-600 mb-3">// เริ่ม Agent Team</div>
+                            <div><span class="text-neon-green">$</span> <span class="text-white">mimo deploy --team production --monitor</span></div>
+                            <div class="mt-4 space-y-1.5">
+                                <div class="text-chrome-500">╔══════════════════════════════════════╗</div>
+                                <div class="text-chrome-500">║  <span class="text-neon-cyan font-bold">MiMo Agent Teams v2.6</span>              ║</div>
+                                <div class="text-chrome-500">║  Engine: mimo-v2-pro (1T params)     ║</div>
+                                <div class="text-chrome-500">║  Context: 1M tokens                  ║</div>
+                                <div class="text-chrome-500">║  <span class="text-emerald-400">Status: Deploying...</span>               ║</div>
+                                <div class="text-chrome-500">╚══════════════════════════════════════╝</div>
+                            </div>
+                            <div class="mt-3"><span class="text-neon-cyan">✓</span> CodeArchitect × 3 — <span class="text-emerald-400">online</span></div>
+                            <div><span class="text-neon-cyan">✓</span> SecurityAuditor × 2 — <span class="text-emerald-400">online</span></div>
+                            <div><span class="text-neon-cyan">✓</span> DataGuardian × 4 — <span class="text-emerald-400">online</span></div>
+                            <div><span class="text-neon-cyan">✓</span> PerfEngineer × 2 — <span class="text-emerald-400">online</span></div>
+                            <div class="mt-3 text-neon-green font-bold">🚀 11 agents deployed — monitoring active</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════ PERFORMANCE ═══════════ -->
+    <section class="py-16 px-6">
+        <div class="max-w-6xl mx-auto">
+            <div class="chrome-surface p-8 md:p-12 reveal">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+                    <div>
+                        <div class="text-4xl md:text-5xl font-display font-bold gradient-text mb-2">10×</div>
+                        <div class="text-chrome-500 text-sm">Faster Deploy</div>
+                    </div>
+                    <div>
+                        <div class="text-4xl md:text-5xl font-display font-bold gradient-text mb-2">1M</div>
+                        <div class="text-chrome-500 text-sm">Token Context</div>
+                    </div>
+                    <div>
+                        <div class="text-4xl md:text-5xl font-display font-bold gradient-text mb-2">1T</div>
+                        <div class="text-chrome-500 text-sm">Parameters</div>
+                    </div>
+                    <div>
+                        <div class="text-4xl md:text-5xl font-display font-bold gradient-text mb-2">&lt;50ms</div>
+                        <div class="text-chrome-500 text-sm">Response Time</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════ CTA ═══════════ -->
+    <section class="py-20 px-6">
+        <div class="max-w-3xl mx-auto text-center reveal">
+            <h2 class="font-display text-4xl md:text-5xl font-bold text-white mb-6">Ready to <span class="gradient-text">Deploy?</span></h2>
+            <p class="text-chrome-400 text-lg mb-8">เริ่มใช้ MiMo Agent Teams ได้ในไม่กี่วินาที</p>
+            <div class="flex flex-wrap justify-center gap-4">
+                <button class="px-8 py-4 rounded-xl bg-gradient-to-r from-mimo-600 to-mimo-500 text-white font-semibold hover:shadow-2xl hover:shadow-mimo-500/25 transition-all duration-300 flex items-center gap-2">
+                    <i data-lucide="terminal" class="w-5 h-5"></i>
+                    npm install @xiaomi/mimo
+                </button>
+                <button class="px-8 py-4 rounded-xl border border-white/10 text-white font-semibold hover:bg-white/5 transition-all duration-300 flex items-center gap-2">
+                    <i data-lucide="github" class="w-5 h-5"></i>
+                    GitHub
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════ FOOTER ═══════════ -->
+    <footer class="border-t border-white/5 py-10 px-6">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded bg-gradient-to-br from-mimo-500 to-neon-cyan flex items-center justify-center">
+                    <i data-lucide="cpu" class="w-3 h-3 text-white"></i>
+                </div>
+                <span class="text-sm text-chrome-500">© 2026 Xiaomi MiMo Team — MiMo-v2-pro</span>
+            </div>
+            <div class="flex items-center gap-5">
+                <a href="#" class="text-chrome-600 hover:text-neon-cyan transition-colors"><i data-lucide="github" class="w-4 h-4"></i></a>
+                <a href="#" class="text-chrome-600 hover:text-neon-cyan transition-colors"><i data-lucide="twitter" class="w-4 h-4"></i></a>
+                <a href="#" class="text-chrome-600 hover:text-neon-cyan transition-colors"><i data-lucide="globe" class="w-4 h-4"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ═══════════ SCRIPTS ═══════════ -->
+    <script>
+        // Lucide Icons
+        lucide.createIcons();
+
+        // ── Particles ──
+        const pContainer = document.getElementById('particles');
+        for (let i = 0; i < 30; i++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            p.style.left = Math.random() * 100 + '%';
+            p.style.animationDelay = Math.random() * 15 + 's';
+            p.style.animationDuration = (10 + Math.random() * 10) + 's';
+            const colors = ['rgba(0,245,255,0.3)', 'rgba(51,120,255,0.3)', 'rgba(168,85,247,0.2)'];
+            p.style.background = colors[Math.floor(Math.random() * 3)];
+            p.style.width = (1 + Math.random() * 2) + 'px';
+            p.style.height = p.style.width;
+            pContainer.appendChild(p);
+        }
+
+        // ── Tabs ──
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+                document.getElementById('tab-' + btn.dataset.tab).classList.remove('hidden');
+            });
+        });
+
+        // ── Scroll Reveal ──
+        const obs = new IntersectionObserver((entries) => {
+            entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('show'); });
+        }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+        document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+        // ── Live Metrics ──
+        setInterval(() => {
+            const a = document.getElementById('m-agents');
+            const t = document.getElementById('m-tasks');
+            const l = document.getElementById('m-latency');
+            if (a) a.textContent = 10 + Math.floor(Math.random() * 5);
+            if (t) t.textContent = (2847 + Math.floor(Math.random() * 20)).toLocaleString();
+            if (l) l.innerHTML = (40 + Math.floor(Math.random() * 20)) + '<span class="text-sm text-chrome-500">ms</span>';
+
+            const clock = document.getElementById('live-time');
+            if (clock) {
+                const now = new Date();
+                clock.textContent = now.toLocaleTimeString('th-TH', { hour12: false });
+            }
+        }, 2000);
+
+        // ── Live Log Stream ──
+        const logLines = [
+            { tag: 'AGENT', cls: 'text-neon-blue', msg: 'CodeArchitect-α → commit approved on feature/auth' },
+            { tag: 'SYNC', cls: 'text-neon-green', msg: 'Cross-agent merge conflict resolved automatically' },
+            { tag: 'AGENT', cls: 'text-neon-purple', msg: 'DataGuardian-γ → cache hit ratio: 94.2%' },
+            { tag: 'AGENT', cls: 'text-neon-amber', msg: 'PerfEngineer-β → DB query optimized (2.1s → 0.3s)' },
+            { tag: 'SCAN', cls: 'text-neon-pink', msg: 'SecurityAuditor-δ → 0 vulnerabilities found' },
+            { tag: 'AUTO', cls: 'text-emerald-400', msg: 'Auto-scaling: PerformanceTest-ε spawned' },
+            { tag: 'CORE', cls: 'text-neon-cyan', msg: 'Task #4823 completed — confidence 99.1%' },
+            { tag: 'AGENT', cls: 'text-neon-blue', msg: 'CodeArchitect-β → PR review assigned to α' },
+            { tag: 'SYNC', cls: 'text-neon-green', msg: 'All 12 agents — health check passed' },
+            { tag: 'AUTO', cls: 'text-emerald-400', msg: 'Rollback prevented — consensus override active' },
+        ];
+        let logIdx = 0;
+
+        setInterval(() => {
+            const container = document.getElementById('log-container');
+            const line = logLines[logIdx % logLines.length];
+            const time = new Date().toLocaleTimeString('th-TH', { hour12: false });
+            const div = document.createElement('div');
+            div.className = 'text-chrome-600 log-line';
+            div.innerHTML = `[${time}] <span class="${line.cls}">${line.tag}</span> ${line.msg}`;
+            container.appendChild(div);
+            if (container.children.length > 12) container.removeChild(container.firstChild);
+            logIdx++;
+        }, 3000);
+
+        // ── Smooth Scroll ──
+        document.querySelectorAll('a[href^="#"]').forEach(a => {
+            a.addEventListener('click', e => {
+                e.preventDefault();
+                document.querySelector(a.getAttribute('href'))?.scrollIntoView({ behavior: 'smooth' });
+            });
+        });
+    </script>
+</body>
+</html>
